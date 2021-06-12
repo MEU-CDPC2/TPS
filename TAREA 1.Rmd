@@ -1,0 +1,95 @@
+---
+title: "Clase 1"
+author: "Luis Tisocco"
+date: "7/6/2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(sf)
+library(ggplot2)
+library(osmdata)
+library(ggmap)
+library(githu)
+library(geojsonR)
+```
+
+
+- Importación de datasets de ESTACIONAMIENTOS, COMUNAS y ESPACIOS VERDES
+- Eliminación de columnas de COMUNAS y BARRIOS
+- st_join de ESTACIONAMIENTOS con COMUNAS Y BARRIOS
+- st_intersection de COMUNAS con ESTACIONAMIENTOS si hay items afuera de CABA (en principio no deberia)
+- grafico de cantidad de estacionamientos por barrio
+- eliminacion de todo lo que no sea microcentro
+- nice map -> poligonos de manzanas y espacios verdes + puntos espaciales de estacionamientos
+
+```{r}
+proyeccion_CABA <- "+proj=tmerc +lat_0=-34.6297166 +lon_0=-58.4627 +k=1 +x_0=100000 +y_0=100000 +ellps=intl +units=m +no_defs"
+options(scipen = 999)
+```
+
+```{r}
+estacionamientos <- read_csv("data/estacionamientos.csv")
+barrios <- st_read ("data/barrios.geojson")
+manzanas <- st_read ("data/manzanas.geojson")
+espacios_verdes <- st_read ("data/espacioverdepublico.geojson")
+```
+
+```{r}
+head(estacionamientos)
+```
+
+```{r}
+estacionamientos <- estacionamientos %>% 
+  select(long, lat, id, nombre, tipo) %>% 
+  rename(lon=long) %>% 
+  st_as_sf(coords = c("lon", "lat"), crs = 4326) %>% 
+  st_transform(crs=proyeccion_CABA)
+```
+
+```{r}
+barrios <- st_transform(barrios, crs=proyeccion_CABA)
+estacionamientos <- st_join (estacionamientos, barrios)
+```
+
+
+```{r}
+estacionamientos_barrio <- estacionamientos %>% 
+  group_by(barrio) %>% 
+  summarise(cantidad=as.numeric(n())) %>% 
+  as.data.frame() %>% 
+  select(!geometry)
+```
+
+```{r}
+estacionamientos_barrio <- left_join(barrios, estacionamientos_barrio, by="barrio")
+```
+
+```{r}
+ggplot()+
+  geom_bar(data=estacionamientos_barrio %>% filter(cantidad!=0), aes(y=reorder(barrio, -cantidad), weight=cantidad, fill=barrio, angle=c(45)), show.legend = FALSE)+
+  scale_fill_viridis_d()+
+  labs(x="Cantidad de estacionamientos", 
+       y="Barrio",
+       title="¿Cuáles son los barrios con más estacionamientos en la Ciudad?", 
+       caption="Datos GCBA")+
+  scale_y_discrete(breaks = seq(0, 10, 1))
+  theme_minimal()
+
+  #geom_bar(aes(x=reorder(partido, -diferencia_porcentual), weight=diferencia_porcentual, fill=partido, angle=c(45))) +
+
+```
+
+
+```{r}
+ggplot()+
+  geom_sf(data=estacionamientos_barrio, aes(fill=cantidad))+
+  scale_fill_viridis_c()+
+  theme_void()
+```
+
+
+
+
+
