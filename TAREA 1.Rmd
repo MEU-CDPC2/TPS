@@ -1,0 +1,146 @@
+---
+title: "Tarea 1"
+subtitle: "CDDPC II - UTDT"
+author: "Luis Tisocco & Santiago Soubie"
+date: "Junio 2021"
+output: html_document
+---
+
+
+## Introducción
+
+En el contexto de la actual pandemia de COVID-19 muchos ideales de la planificación urbana se han puesto en duda. Uno de ellos, y quizás el más evidente, tiene que ver con los patrones de uso del suelo de los centros de las grandes ciudades.
+
+Pesando en una posible revitalización urbana y en la incoporación de áreas verdes en zonas densas y consolidadas, nos preguntamos:
+
+
+    - ¿Es posible convertir los estacionamientos concesionados en áreas verdes? 
+    ¿Dónde se ubican? ¿Están espacialmente concentrados en el centro?
+
+
+
+## Desarrollo
+
+
+Cargamos las librerías que vamos a utilizar
+
+```{r}
+library(tidyverse)
+library(sf)
+library(ggplot2)
+library(osmdata)
+library(ggmap)
+```
+
+
+Creamos un objeto que contiene el sistema de proyecciones de CABA. Esto nos servirá para trasnformar los datos espaciales en el caso de que estén en otro crs. 
+Anulamos además la notación científica
+
+```{r}
+proyeccion_CABA <- "+proj=tmerc +lat_0=-34.6297166 +lon_0=-58.4627 +k=1 +x_0=100000 +y_0=100000 +ellps=intl +units=m +no_defs"
+options(scipen = 999)
+```
+
+Cargamos los datasets que estaremos utilizando
+
+```{r}
+estacionamientos <- read_csv("data/estacionamientos.csv")
+barrios <- st_read ("data/barrios.geojson")
+manzanas <- st_read ("data/manzanas.geojson")
+espacios_verdes <- st_read ("data/espacioverdepublico.geojson")
+```
+Inspeccionamos nuestro dataset principal:
+
+```{r}
+head(estacionamientos)
+```
+
+Hay 49 estacionamientos concesionados, de acuerdo a los datos del GCBA.
+Como existen missing values en las columnas de barrio y comuna, procederemos a eliminar dichas columnas y econtrar la información de manera espacial. 
+Sólo nos quedaremos con las columnas que nos interesan para el análisis.
+
+```{r}
+estacionamientos <- estacionamientos %>% 
+  #seleccionamos las columnas
+  select(long, lat, id, nombre, tipo) %>% 
+  #renombramos la columna de longitud, por comodidad
+  rename(lon=long) %>% 
+  #levantamos el csv espacialmente, tomando los valores de longitud y latitud
+  st_as_sf(coords = c("lon", "lat"), crs = 4326) %>% 
+  #nos aseguramos de que esté en el sistema de coordenadas deseado
+  st_transform(crs=proyeccion_CABA)
+```
+
+
+### ¿Cuántos estacionamientos concesionados hay por barrio?
+
+Haremos una unión espacial de barrios con estacionamientos
+
+```{r}
+#primero pasamos los barrios al mismo crs
+barrios <- st_transform(barrios, crs=proyeccion_CABA)
+estacionamientos <- st_join (estacionamientos, barrios)
+```
+
+```{r}
+head(estacionamientos)
+```
+Vemos que se le agregaron las columnas correspondientes a los datos de barrios (barrio, comuna, perímetro, área y geometry)
+
+Paso siguiente, lo agruparemos por barrio y resumiremos por cantidad de etacionamiento. Lo convertiremos en data.frame y eliminaremos la geometría. 
+
+```{r}
+estacionamientos_barrio <- estacionamientos %>% 
+  group_by(barrio) %>% 
+  summarise(cantidad=(n())) %>% 
+  as.data.frame() %>% 
+  select(!geometry)
+```
+
+```{r}
+head(estacionamientos_barrio)
+```
+Logramos crear una tabla de datos simple donde sólo tenemos los nombres de los barrios y la cantidad de estacionamientos concesionados en cada uno de ellos.
+Ahora sí lo uniremos por nombre a los datos espaciales de barrios, para recuperar la geometría. 
+
+```{r}
+estacionamientos_barrio <- left_join(barrios, estacionamientos_barrio, by="barrio")
+```
+
+Visualizamos
+
+```{r}
+ggplot()+
+  geom_bar(data=estacionamientos_barrio %>% filter(cantidad!=0), aes(y=reorder(barrio, -cantidad), weight=cantidad, fill=barrio, angle=c(45)), show.legend = FALSE)+
+  scale_fill_viridis_d()+
+  labs(x="Cantidad de estacionamientos concesionados", 
+       y="Barrio",
+       title="¿Cuáles son los barrios con más estacionamientos en la Ciudad?", 
+       caption="Datos GCBA")+
+  scale_x_continuous(breaks = seq(0, 12, 1))+
+  theme_minimal()
+
+  #geom_bar(aes(x=reorder(partido, -diferencia_porcentual), weight=diferencia_porcentual, fill=partido, angle=c(45))) +
+
+```
+
+Mapeamos
+
+```{r}
+ggplot()+
+  geom_sf(data=barrios, fill="white")+
+  geom_sf(data=estacionamientos_barrio %>% filter(cantidad!=0), aes(fill=cantidad), alpha=.5, show.legend = FALSE)+
+  geom_sf_text(data=estacionamientos_barrio, aes(label=cantidad), size=4, fontface = "bold")+
+  scale_fill_viridis_c()+
+  labs(title="¿Cuántos estacionamientos concesionados hay por barrio?",
+              caption="Datos GCBA")+
+  theme_void()
+```
+
+
+En este primer análisis evidenciamos que las áreas centrales concentran la mayor cantidad de estacionamientos concesionados. 
+Continuaremos focalizándonos en el barrio de San Nicolás.
+
+
+
+
