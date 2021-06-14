@@ -1,0 +1,234 @@
+---
+title: "Trabajo Práctico Nº1"
+subtitle: "CDDPC II - UTDT"
+author: "Luis Tisocco & Santiago Soubie"
+date: "Junio 2021"
+output: html_document
+---
+
+```{r include=FALSE}
+library(tidyverse)
+library(sf)
+options(scipen = 999) #Anula la notación científica
+```
+
+## **Introducción**
+
+En el contexto de la actual pandemia de COVID-19 muchos ideales de la planificación urbana se han puesto en duda. Uno de ellos, y quizás el más evidente, tiene que ver con los patrones de uso del suelo de los centros de las grandes ciudades.
+
+Pesando en una posible revitalización urbana y en la incoporación de áreas verdes en zonas densas y consolidadas, nos preguntamos:
+
+
+    - ¿Es posible convertir los estacionamientos concesionados en áreas verdes? 
+    ¿Dónde se ubican? ¿Están espacialmente concentrados en el centro?
+
+
+**Consignas**
+
+1. *Elegir una ciudad de cualquier parte del mundo que les interese (ya que seguirán trabajando con ella a lo largo del curso) y que disponga de un portal de datos abiertos que ofrezca un shapefile (formato geojson o shp) de polígonos con alguna división geográfica: barrios, comunas, etc.*
+
+En este trabajo elegiremos a la *Ciudad Autónoma de Buenos Aires (CABA)* como objeto de estudio.
+
+Nuestro primer paso será cargar los datasets espaciales que incluyen los barrios y las manzanas de la ciudad.
+
+```{r}
+barrios <- st_read ("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/barrios.geojson")
+manzanas <- st_read ("C:/Users/Santi/Desktop/Santi/Ciencia de Datos/Instrumento de Analisis Urbano/TP/Datasets/manzanas.geojson")
+```
+
+2. *Del mismo portal de datos donde descargaron el shapefile, o de otra fuente si la tienen, elegir un dataset con registros geo-referenciados. Por ejemplo, las escuelas de la ciudad (o las comisarías, o las propiedades en alquiler, etc) con sus coordenadas. Puede ser en formato csv o  shapefile.*
+
+La pandemia generó grandes transformaciones en las formas de habitar nuestras ciudades. En esta linea, a partir de los cambios en los patrones de movilidad, grandes espacios de la trama urbana dedicados al transporte, como los estacionamientos, quedaron en desuso, provocando así grandes vacíos urbanos, particularmente, en las zonas céntricas. De igual manera, la coyuntura puso en evidencia la falta de espacios verdes existente en la CABA. 
+
+Con el fin de construir una solución que permita reconvertir aquellas superficies obsoletas en espacios verdes y así mejorar la calidad de vida de las personas, en este trabajo analizaremos terriotrialmente la distribución de los estacionamientos urbanos.
+
+A continuación abriremos los datasets de estacionamientos y de espacios verdes.
+
+```{r}
+estacionamientos <- read.csv("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/estacionamientos.csv",
+                             stringsAsFactors = TRUE,
+                             encoding = "UTF-8")
+espacioverde <- st_read("https://cdn.buenosaires.gob.ar/datosabiertos/datasets/secretaria-de-desarrollo-urbano/espacios-verdes/espacio-verde-publico.geojson")
+```
+
+3. *Realizar un "join espacial", asignando a cada registro geo-referenciado la unidad geográfica (barrio, comuna, etc) que le corresponda y utilizar ggplot() para realizar lo siguiente:*
+
+Inspeccionamos nuestro dataset principal:
+
+```{r}
+head(estacionamientos)
+```
+
+```{r}
+nrow(estacionamientos)
+```
+
+Hay 49 estacionamientos concesionados, de acuerdo a los datos del GCBA.
+Como existen missing values en las columnas de barrio y comuna, procederemos a eliminar dichas columnas y econtrar la información de manera espacial. 
+Sólo nos quedaremos con las columnas que nos interesan para el análisis.
+
+```{r}
+estacionamientos <- estacionamientos %>% 
+  #seleccionamos las columnas
+  select(long, lat, id, nombre, tipo) %>% 
+  #renombramos la columna de longitud, por comodidad
+  rename(lon=long) %>% 
+  #levantamos el csv espacialmente, tomando los valores de longitud y latitud
+  st_as_sf(coords = c("lon", "lat"), crs = 4326)
+```
+
+### ¿Cuántos estacionamientos concesionados hay por barrio?
+
+PAra saber cuantos estacionamientos hay concesionados por barrio, primero haremos una unión espacial de nuestros datasets.
+
+```{r}
+#primero nos aseguramos que ambos datasets se encuentren en el mismo sistema de coordenadas.
+barrios <- st_transform(barrios, crs=st_crs(estacionamientos))
+estacionamientos <- st_join (estacionamientos, barrios)
+```
+
+```{r}
+head(estacionamientos)
+```
+
+Vemos que se le agregaron las columnas correspondientes a los datos de barrios (barrio, comuna, perímetro, área y geometry)
+
+Paso siguiente, lo agruparemos por barrio y resumiremos por cantidad de estacionamiento. Luego, lo convertiremos en data.frame y eliminaremos la geometría. 
+
+```{r}
+estacionamientos_barrio <- estacionamientos %>% 
+  group_by(barrio) %>% 
+  summarise(cantidad=(n())) %>% 
+  st_set_geometry(NULL) %>% 
+  as.data.frame()
+```
+
+```{r}
+head(estacionamientos_barrio)
+```
+
+Logramos crear una tabla de datos donde sólo tenemos los nombres de los barrios y la cantidad de estacionamientos concesionados en cada uno de ellos.
+
+Como paso siguiente, uniremos nuevamente nuestro dataset a los datos espaciales de barrios para recuperar la geometría. 
+
+```{r}
+estacionamientos_barrio <- left_join(barrios, estacionamientos_barrio, by="barrio")
+```
+
+Visualizamos
+
+```{r}
+ggplot()+
+  geom_bar(data=estacionamientos_barrio %>% filter(cantidad!=0), aes(y=reorder(barrio, -cantidad), weight=cantidad, fill=barrio), show.legend = FALSE)+
+  scale_fill_viridis_d()+
+  labs(x="Cantidad de estacionamientos concesionados", 
+       y="Barrio",
+       title="¿Cuáles son los barrios con más estacionamientos en la Ciudad?", 
+       caption="Fuente: GCBA")+
+  scale_x_continuous(breaks = seq(0, 12, 1))+
+  theme_minimal()
+  #geom_bar(aes(x=reorder(partido, -diferencia_porcentual), weight=diferencia_porcentual, fill=partido, angle=c(45))) +
+```
+
+Mapeamos
+
+```{r}
+ggplot()+
+  geom_sf(data=barrios, fill="white")+
+  geom_sf(data=estacionamientos_barrio %>% filter(cantidad!=0), aes(fill=cantidad), alpha=.5, show.legend = FALSE)+
+  geom_sf_text(data=estacionamientos_barrio, aes(label=cantidad), size=4, fontface = "bold")+
+  scale_fill_viridis_c()+
+  labs(title="¿Cuántos estacionamientos concesionados hay por barrio?",
+              caption="Fuente: GCBA")+
+  theme_void()+
+  theme(plot.title = element_text( hjust = 0.5))
+```
+
+En este primer análisis observamos que el área central de la ciudad concentra casi la mitad de los estacionamientos concesionados de la CABA. A continuación, analizaremos esta cuestión con mayor profundidad.
+
+Nuestro primer paso será geolocalizar las manzanas de la Ciudad. Como estas no cuentan con información del barrio en el que se ubican, procederemos a unir los datasets.
+
+```{r}
+manzanas <- st_join(manzanas, barrios)
+```
+
+Luego, nos quedaremos con las manzanas pertenecientes a los barrios del microcentro porteño (Balvanera, Monserrat y San Nicolas).
+
+```{r}
+microcentro <- filter(manzanas, barrio=="MONSERRAT" | barrio=="BALVANERA" | barrio=="SAN NICOLAS")
+```
+
+Utilizaremos este último dataset para filtrar los estacionamientos y espacios verdes de la CABA.
+
+```{r}
+estacionamientos <- st_intersection(estacionamientos, microcentro)
+espacioverde <- st_intersection(espacioverde, microcentro)
+```
+
+Y nos quedamos solo con aquellos estacionamientos que sean al nivel de la vereda.
+
+```{r}
+estacionamientos<- filter(estacionamientos, tipo!="Estacionamiento Subterráneo")
+```
+
+Graficamos
+
+```{r}
+ggplot()+
+  geom_sf(data = microcentro, fill="grey96")+
+  geom_sf(data = espacioverde, fill="springgreen2")+
+  geom_sf(data = estacionamientos, aes(color="Estacionamientos"), size=2)+
+  scale_color_manual(values = c("Estacionamientos"="blue"))+
+  labs(title = "¿Dónde se ubican los estacionamientos del Microcentro porteño?",
+       color="",
+       subtitle = "",
+       caption = "Fuente: BA Data")+
+  theme_void()+
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "bottom",
+        legend.box.background = element_rect(color = "black"),
+        legend.box.margin = margin(3,6,3,6))
+```
+
+```{r include=FALSE}
+library(hereR)
+set_key("pcWH0YNYi1G1eqMvAM7fjHWMvqNOaKL6yprw1aMNCeU")
+```
+
+Ahora, analizaremos la ubicación de los estacionamientos en referencia a los espacios verdes y su cobertura. Particularmente, nos centraremos en identificar el rango de manzanas que se puden cubrir a pie en 5 minutos o menos desde un espacio verde.
+
+```{r}
+puntosEspaciosVerdes <- map(1:nrow(espacioverde),function(x){st_sample(espacioverde[x,],size=4)})
+puntosEspaciosVerdes <- do.call("c",puntosEspaciosVerdes)
+puntosEspaciosVerdesSF <- st_as_sf(puntosEspaciosVerdes)
+puntosEspaciosVerdesSF <- st_transform(puntosEspaciosVerdesSF,crs=4326)
+isocronosEspaciosVerdes <- map(1:nrow(puntosEspaciosVerdesSF),function(x) {cat("Procesando: ",x,"\r")
+  isoline(puntosEspaciosVerdesSF[x,], transport_mode = "pedestrian",range_type = "time",range = 60*5)})
+isocronosEspaciosVerdesJuntas <- do.call(rbind,isocronosEspaciosVerdes)
+isocronosEspaciosVerdesJuntasUnion <-  st_union(isocronosEspaciosVerdesJuntas)
+isocronosEspaciosVerdesJuntasUnion <- st_as_sf(isocronosEspaciosVerdesJuntasUnion) %>% 
+                                      mutate(cobertura=TRUE)
+```
+
+Graficamos
+
+```{r}
+ggplot()+
+  geom_sf(data = microcentro, fill="grey96")+
+  geom_sf(data = espacioverde, fill="springgreen2")+
+  geom_sf(data = estacionamientos, aes(color="Estacionamientos"), size=2)+
+  geom_sf(data = isocronosEspaciosVerdesJuntasUnion, aes(fill="Cobertura de espacios verdes"), alpha=0.25, color="black")+
+  scale_color_manual(values = c("Estacionamientos"="blue"))+
+  scale_fill_manual(values = c("Cobertura de espacios verdes"="lightgreen"))+
+ labs(title = "¿Cuál es la cobertura de espacios verdes del Microcentro?",
+      color="",
+      fill="",
+      subtitle = "Manzanas a 5 min. o menos de un espacio verde",
+      caption = "Fuente: BA Data")+
+  theme_void()+
+  theme(plot.title = element_text(hjust = 0.5, face="bold"),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "bottom",
+        legend.box.background = element_rect(color = "black"),
+        legend.box.margin = margin(3,6,3,6))
+```
