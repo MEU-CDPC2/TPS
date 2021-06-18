@@ -9,6 +9,7 @@ output: html_document
 ```{r include=FALSE}
 library(tidyverse)
 library(sf)
+library(ggmap)
 options(scipen = 999) #Anula la notación científica
 ```
 
@@ -48,7 +49,7 @@ A continuación abriremos los datasets de estacionamientos y de espacios verdes.
 estacionamientos <- read.csv("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/estacionamientos.csv",
                              stringsAsFactors = TRUE,
                              encoding = "UTF-8")
-espacioverde <- st_read("https://cdn.buenosaires.gob.ar/datosabiertos/datasets/secretaria-de-desarrollo-urbano/espacios-verdes/espacio-verde-publico.geojson")
+espacioverde <- st_read("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/espacioverdepublico.geojson")
 ```
 
 3. *Realizar un "join espacial", asignando a cada registro geo-referenciado la unidad geográfica (barrio, comuna, etc) que le corresponda y utilizar ggplot() para realizar lo siguiente:*
@@ -232,3 +233,58 @@ ggplot()+
         legend.box.background = element_rect(color = "black"),
         legend.box.margin = margin(3,6,3,6))
 ```
+
+Ahora comparemos los estacionamientos, pero utilizando las estaciones de Ecobicis y su cobertura como referencia. Repitamos el proceso.
+
+```{r}
+bbox_microcentro <- as.numeric(st_bbox(microcentro))
+```
+
+```{r}
+mapamicrocentro <- get_stamenmap(bbox = bbox_microcentro,
+                          maptype = "toner-lite",
+                          zoom=15)
+```
+
+```{r}
+bicis <- st_read("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/bicis.geojson")
+```
+
+```{r}
+bicis <- st_intersection(bicis, microcentro)
+```
+
+```{r}
+isocronosbicis <- map(1:nrow(bicis),function(x) {cat("Procesando: ",x,"\r")
+  isoline(bicis[x,], transport_mode = "pedestrian",range_type = "time",range = 60*5)})
+isocronosbicisjuntas <- do.call(rbind,isocronosbicis)
+isocronosbicisjuntasunion <-  st_union(isocronosbicisjuntas)
+isocronosbicisjuntasunion <- st_as_sf(isocronosbicisjuntasunion) %>% 
+                                      mutate(cobertura=TRUE)
+```
+
+Grafiquemos
+
+```{r}
+ggmap(mapamicrocentro)+
+  geom_sf(data = microcentro, fill="grey96", inherit.aes = FALSE)+
+  geom_sf(data = espacioverde, fill="mediumseagreen", inherit.aes = FALSE)+
+  geom_sf(data=bicis, aes(color="Ecobicis"), size=2, inherit.aes = FALSE)+
+  geom_sf(data = estacionamientos, aes(color="Estacionamientos"), size=2, inherit.aes = FALSE)+
+  geom_sf(data = isocronosbicisjuntasunion, aes(fill="A 5 min o menos a pie de una estación de Ecobicis"), color="coral1", alpha=0.20, color="black", inherit.aes = FALSE)+
+  scale_fill_manual(values = c("A 5 min o menos a pie de una estación de Ecobicis"="chocolate2"))+
+  scale_color_manual(values = c("Estacionamientos"="blue", "Ecobicis"="orangered"))+
+ labs(title = "¿Y si transformamos los estacionamientos del centro porteño en espacios verdes?",
+      subtitle = "",
+      fill="",
+      color="",
+      caption = "Fuente: BA Data")+
+  theme_void()+
+  theme(plot.title = element_text(size= 12, hjust = 0.5,  face="bold"),
+        plot.caption=element_text(face = "italic", size=8),
+        legend.position = "bottom",
+        legend.box.background = element_rect(color = "black"),
+        legend.box.margin = margin(3,6,3,6))
+```
+
+# ACÁ PODEMOS METER LA INTERSECCIÓN DE LAS COBERTURAS (A MÁS DE 5 MIN DE ESPACIOS VERDES Y A MENOS DE 5 DE ECOBICIS) Y SELECCIONAMOS LOS ESTACIONAMIENTOS PIOLAS.
