@@ -6,11 +6,6 @@ date: "Junio 2021"
 output: html_document
 ---
 
-```{r}
-hola <- "hello world"
-```
-
-
 ```{r include=FALSE}
 library(tidyverse)
 library(sf)
@@ -24,7 +19,7 @@ En el contexto de la actual pandemia de COVID-19 muchos ideales de la planificac
 Pesando en una posible revitalización urbana y en la incoporación de áreas verdes en zonas densas y consolidadas, nos preguntamos:
 
 
-    - ¿Es posible convertir los estacionamientos concesionados en áreas verdes? 
+    ¿Es posible convertir los estacionamientos concesionados en áreas verdes? 
     ¿Dónde se ubican? ¿Están espacialmente concentrados en el centro?
 
 
@@ -38,7 +33,7 @@ Nuestro primer paso será cargar los datasets espaciales que incluyen los barrio
 
 ```{r}
 barrios <- st_read ("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/barrios.geojson")
-manzanas <- st_read ("C:/Users/Santi/Desktop/Santi/Ciencia de Datos/Instrumento de Analisis Urbano/TP/Datasets/manzanas.geojson")
+manzanas <- st_read ("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/manzanas.geojson")
 ```
 
 2. *Del mismo portal de datos donde descargaron el shapefile, o de otra fuente si la tienen, elegir un dataset con registros geo-referenciados. Por ejemplo, las escuelas de la ciudad (o las comisarías, o las propiedades en alquiler, etc) con sus coordenadas. Puede ser en formato csv o  shapefile.*
