@@ -6,6 +6,11 @@ date: "Junio 2021"
 output: html_document
 ---
 
+```{r}
+hola <- "hello world"
+```
+
+
 ```{r include=FALSE}
 library(tidyverse)
 library(sf)
