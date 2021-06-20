@@ -128,7 +128,6 @@ ggplot()+
        caption="Fuente: GCBA")+
   scale_x_continuous(breaks = seq(0, 12, 1))+
   theme_minimal()
-  #geom_bar(aes(x=reorder(partido, -diferencia_porcentual), weight=diferencia_porcentual, fill=partido, angle=c(45))) +
 ```
 
 Mapeamos
@@ -288,3 +287,126 @@ ggmap(mapamicrocentro)+
 ```
 
 # ACÁ PODEMOS METER LA INTERSECCIÓN DE LAS COBERTURAS (A MÁS DE 5 MIN DE ESPACIOS VERDES Y A MENOS DE 5 DE ECOBICIS) Y SELECCIONAMOS LOS ESTACIONAMIENTOS PIOLAS.
+
+
+
+#------------------------
+
+
+```{r include=FALSE}
+library(osmdata)
+```
+
+```{r}
+parking_BA_OSM <- opq ("Buenos Aires, Argentina") %>% 
+  add_osm_feature(key="amenity", value="parking")
+parking_BA_OSM <- osmdata_sf(parking_BA_OSM) 
+parking_BA_OSM <- parking_BA_OSM$osm_points
+```
+
+```{r}
+parking_BA_OSM <- parking_BA_OSM %>% select(osm_id, parking, geometry)
+```
+
+```{r}
+parking_BA_OSM <- st_intersection(parking_BA_OSM, barrios, crs=(barrios))
+
+parking_BA_OSM_barrio <- parking_BA_OSM %>% 
+  group_by(barrio) %>% 
+  summarise(cantidad_OSM=(n())) %>% 
+  as.data.frame() %>% 
+  st_set_geometry(NULL) %>% 
+```
+```{r fig.height=10}
+ggplot()+
+  geom_bar(data=parking_BA_OSM_barrio %>% filter(cantidad_OSM!=0), aes(y=reorder(barrio, -cantidad_OSM), weight=cantidad_OSM, fill=barrio), show.legend = FALSE)+
+  scale_fill_viridis_d()+
+  labs(x="Cantidad de estacionamientos", 
+       y="Barrio",
+       title="¿Cuántos estacionamientos por barrio existen según OSM?", 
+       caption="Fuente: OSM")+
+  scale_x_continuous(breaks = seq(0, 500, 50))+
+  theme_minimal()
+```
+
+
+```{r}
+parking_BA <- left_join(barrios, parking_BA_OSM_barrio, by="barrio")
+```
+
+Visualizamos
+
+```{r}
+ggplot()+
+  geom_sf(data=barrios, fill="white")+
+  geom_sf(data=parking_BA %>% filter(cantidad_OSM!=0), aes(fill=cantidad_OSM), alpha=.5, show.legend = FALSE)+
+  geom_sf_text(data=parking_BA, aes(label=cantidad_OSM), size=4, fontface = "bold")+
+  scale_fill_viridis_c()+
+  labs(title="¿Cuántos estacionamientos concesionados hay por barrio según OSM?",
+              caption="Fuente: OSM")+
+  theme_void()+
+  theme(plot.title = element_text( hjust = 0.5))
+```
+
+
+
+
+```{r}
+estacionamientos_barrio[is.na(estacionamientos_barrio)] <- 0
+
+parking_OSM_GCBA <- left_join(parking_BA_OSM_barrio, estacionamientos_barrio, by="barrio") %>% 
+  rename("cantidad_GCBA"="cantidad") %>% 
+  group_by(barrio, cantidad_OSM, cantidad_GCBA) %>%
+  summarise(diferencia=cantidad_OSM-cantidad_GCBA)
+```
+```{r}
+head(parking_OSM_GCBA, y=reorder(barrio, -diferencia))
+```
+
+
+```{r fig.height=10}
+ggplot()+
+  geom_bar(data=parking_OSM_GCBA, aes(y=reorder(barrio, -cantidad_OSM), weight=cantidad_OSM, fill=barrio), show.legend = FALSE)+
+  geom_bar(data=parking_OSM_GCBA, aes(y=reorder(barrio, -cantidad_OSM), weight=cantidad_GCBA, fill=barrio), fill="red", show.legend = FALSE)+
+  scale_fill_viridis_d()+
+  labs(x="Diferencia (cantidad de estacionamientos)", 
+       y="Barrio",
+       title="¿Cuánto difieren los datos de OSM con respecto a los del GCBA?", 
+       caption="Fuente: GCBA + OSM",
+       fill="Estacionamientos GCBA")+
+  scale_x_continuous(breaks = seq(0, 500, 50))+
+  theme_minimal()
+```
+
+
+
+```{r}
+parking_microcentro <- parking_BA_OSM %>% 
+  filter(barrio=="MONSERRAT" | barrio=="BALVANERA" | barrio=="SAN NICOLAS") %>% 
+  filter(parking!="underground")
+```
+
+```{r}
+ggplot()+
+  geom_sf(data = microcentro, fill="grey96")+
+  geom_sf(data = espacioverde, fill="springgreen2")+
+  geom_sf(data = estacionamientos, aes(color="Estacionamientos GCBA"), size=2)+
+  geom_sf(data=parking_microcentro, aes(color="Estacionamientos OSM"), size=2)+
+  scale_color_manual(values = c("Estacionamientos GCBA"="blue", "Estacionamientos OSM"="red"))+
+  labs(title = "¿Dónde se ubican los estacionamientos del Microcentro porteño \n según las distintas fuentes?",
+       color="",
+       subtitle = "",
+       caption = "Fuente: BA Data")+
+  theme_void()+
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "bottom",
+        legend.box.background = element_rect(color = "black"),
+        legend.box.margin = margin(3,6,3,6))
+```
+
+
+
+
+
+
+
