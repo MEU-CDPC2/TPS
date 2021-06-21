@@ -302,13 +302,13 @@ library(osmdata)
 
 1. *Descargar de OpenStreetMap la grilla de calles para la Ciudad elegida en el ejercicio 1 y mapearla por uno de sus atributos (velocidad mínima, velocidad máxima, cantidad de carriles, etc).*
 
-Primero, creamos una caja de coordenadas de la CABA para decirle a R que nos traiga la info de allí.
+Primero, creamos la caja de coordenadas de la CABA.
 
 ```{r}
 bbox_CABA <- getbb("Ciudad Autónoma de Buenos Aires, Argentina")
 ```
 
-*Nos fijamos que las coordenadas extraídas sena las precisas*
+*Nos fijamos que las coordenadas extraídas sean las precisas.*
 
 ```{r}
 mapa_CABA <- get_stamenmap(bbox = bbox_CABA,
@@ -321,22 +321,22 @@ ggmap(mapa_CABA)+
   theme_void()
 ```
 
-Segundo, queremos crear un dataset con las calles de CABA. Para ello:
+Segundo, creamos un dataset con las calles de CABA. Para ello:
 
-1º Consultamos la info disponible.
+1º. Consultamos la info disponible.
 
 ```{r}
 CABA_calles <- opq(bbox_CABA) %>% 
   add_osm_feature(key="highway") 
 ```
 
-2º Descargamos la info.
+2º. Descargamos la info.
 
 ```{r}
 CABA_calles <- osmdata_sf(CABA_calles)
 ```
 
-3º Seleccionamos solo las líneas y las asignamos a nuestra lista para que se transfome en un dataset.
+3º. Seleccionamos solo las líneas y las asignamos a nuestra lista para que se transfome en un dataset.
 
 ```{r}
 CABA_calles <- CABA_calles$osm_lines
@@ -349,7 +349,8 @@ ggmap(mapa_CABA)+
   geom_sf(data = CABA_calles, color="deepskyblue4", alpha=0.5, inherit.aes = FALSE)+
   labs(title="Calles de la Ciudad Autónoma de Buenos Aires",
        caption="Fuente: Open Street Map")+
-  theme_void()
+  theme_void()+
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 Como vemos, no solo nos descarga las calles de la CABA sino de todo el sistema de coordenadas. Para solucionar ese problema, haremos lo siguiente:
@@ -386,17 +387,19 @@ ggmap(mapa_CABA)+
   geom_sf(data = CABA_calles, color="deepskyblue4", alpha=0.5, inherit.aes = FALSE)+
   labs(title="Calles de la Ciudad Autónoma de Buenos Aires",
        caption="Fuente: Open Street Map")+
-  theme_void()
+  theme_void()+
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
-Por último, coloreamos nuestras calles de acuerdo con el tipo.
+Por último, coloreamos nuestras calles de acuerdo con el la velocidad máxima permitida.
 
 ```{r}
 CABA_calles <- mutate(CABA_calles, maxspeed= fct_relevel(maxspeed, "5", "10", "20", "30", "40", "50", "60", "70", "80", "90", "100", "130"))
 
 ggmap(mapa_CABA)+
   geom_sf(data = filter(CABA_calles, !(is.na(maxspeed))), aes(color=maxspeed), inherit.aes = FALSE)+
-    labs(title="Ciudad Autónoma de Buenos Aires",
+  scale_color_viridis_d()+
+    labs(title="Calles de la Ciudad Autónoma de Buenos Aires",
        color="Velocidad máxima (KM/H)",
        caption="Fuente: Open Street Map")+
   theme_void()
@@ -432,7 +435,7 @@ Al igual que hicimos con las calles, nos quedaremos unicamente con los estaciona
 parking_CABA_OSM <- st_intersection(parking_CABA_OSM, bbox_CABA_limite)
 ```
 
-Nos quedamos solo con los valores únicos
+*Nos quedamos solo con los valores únicos.*
 
 ```{r}
 parking_CABA_OSM <- unique(parking_CABA_OSM)
@@ -450,7 +453,7 @@ ggmap(mapa_CABA)+
   theme_void()
 ```
 
-Al ver el gráfico anterior, podemos observar que hay algo que no anda bien. Nuestro dataset de estacionamientos contiene 87 registros, aunque solo aparecen geolocalizados unos pocos puntos. Ello puede deverse a que la posición de los mismos esta mal cargada.
+Al ver el mapa anterior, podemos observar que hay algo que no anda bien. Nuestro dataset de estacionamientos contiene 87 registros, aunque solo aparecen geolocalizados unos pocos puntos. Ello puede deverse a que la posición de los mismos esta mal cargada.
 
 No obstante, en Open Street Maps es posible encontrar que los estacionamientos se encuentran divididos en múltiples categorías. Probemos con otra categoría mucho más amplia que la original y repitamos el proceso:
 
@@ -481,11 +484,11 @@ ggmap(mapa_CABA)+
   theme_void()
 ```
 
-Como podemos ver en el mapa anterior, la mayor concentración de estacionamientos se da en el corredor que se extiende desde el centro de la CABA hacia el norte. No obstante, es importante reconocer que los enstacionamientos se muesntran distribudios a lo largo y ancho de la ciudad.
+Como podemos ver en el mapa anterior, la mayor concentración de estacionamientos se da en el corredor que se extiende desde el centro de la CABA hacia el norte. No obstante, es importante reconocer que los enstacionamientos se muestran distribudios a lo largo y ancho de la ciudad.
 
 2. b. *Hacer un conteo de los ítems de la capa descargada por barrio, mapearlo y compararlo con el conteo de los ítems descargados en el ejercicio anterior: ¿La distribución es similar o hay diferencias? ¿A qué se puede deber?*
 
-Ahora, crucemos nuestro dataset de estacionamientos con el de barrios para conocer su distribución por cada uno de estos últimos.
+Ahora, crucemos nuestro dataset de estacionamientos con el de barrios para conocer su distribución por cada uno de estos.
 
 ```{r}
 parking_CABA_OSM_B <- st_transform(parking_CABA_OSM_B, crs = st_crs(barrios))
@@ -495,6 +498,8 @@ parking_CABA_OSM_B <- st_transform(parking_CABA_OSM_B, crs = st_crs(barrios))
 parking_CABA_OSM_B <- st_join(parking_CABA_OSM_B, barrios)
 ```
 
+Agrupemos los casos por barrio.
+
 ```{r}
 parking_CABA_OSM_barrio <- parking_CABA_OSM_B %>% 
   group_by(barrio) %>% 
@@ -503,6 +508,8 @@ parking_CABA_OSM_barrio <- parking_CABA_OSM_B %>%
   as.data.frame() %>% 
   filter(!is.na(barrio))
 ```
+
+Grafiquemos.
 
 ```{r fig.height=10}
 ggplot()+
@@ -548,9 +555,9 @@ ggplot()+
   theme(plot.title = element_text( hjust = 0.5))
 ```
 
-La primer observación que obtenemos es que nuestro N aumento considerablemente. Luego, Si bien la mayor concentración de estacionamientos se da en el eje Centro - Norte de la CABA (siendo Palermo el principal barrio ahora), existe una oferta cosiderable en barrios perífericos como Lugano, Caballito, La Boca, Flores y Villa Soldati.
+La primer observación que obtenemos es que nuestro N aumento considerablemente. Luego, si bien la mayor concentración de estacionamientos se da en el eje Centro - Norte de la CABA (siendo Palermo el principal barrio ahora), existe una oferta cosiderable en barrios perífericos como Lugano, Caballito, La Boca, Flores y Villa Soldati.
 
-Estas diferencias pueden deverse a varios factores. Sin embargo, es importante reconocer que, mientras nuestro GEOJSON original nos daba solo la ubicación de los estacionamientos concesionados, el nuevi dataset con datos de OSM ofrece información de todos los tipos de estacionamientos existentes en la CABA.
+Estas diferencias pueden deverse a varios factores. Sin embargo, es importante reconocer que, mientras nuestro GEOJSON original nos daba solo la ubicación de los estacionamientos concesionados, el nuevo dataset con datos de OSM ofrece información de todos los tipos de estacionamientos existentes en la CABA.
 
 Veamos las diferencias con mayor precisión:
 
@@ -581,6 +588,8 @@ ggplot()+
   theme_minimal()
 ```
 
+Mapiemos las diferencias para el área del Microcentro porteño.
+
 ```{r}
 parking_microcentro <- parking_CABA_OSM_B %>% 
   filter(barrio=="MONSERRAT" | barrio=="BALVANERA" | barrio=="SAN NICOLAS") %>% 
@@ -591,8 +600,8 @@ parking_microcentro <- parking_CABA_OSM_B %>%
 ggplot()+
   geom_sf(data = microcentro, fill="grey96")+
   geom_sf(data = espacioverde, fill="springgreen2")+
-  geom_sf(data = estacionamientos, aes(color="Estacionamientos GCBA"), size=2)+
-  geom_sf(data=parking_microcentro, aes(color="Estacionamientos OSM"), size=2)+
+  geom_sf(data = estacionamientos, aes(color="Estacionamientos GCBA"), size=2, alpha=0.5)+
+  geom_sf(data=parking_microcentro, aes(color="Estacionamientos OSM"), size=2, alpha=0.5)+
   scale_color_manual(values = c("Estacionamientos GCBA"="blue", "Estacionamientos OSM"="red"))+
   labs(title = "¿Dónde se ubican los estacionamientos del Microcentro porteño \n según las distintas fuentes?",
        color="",
@@ -605,3 +614,4 @@ ggplot()+
         legend.box.margin = margin(3,6,3,6))
 ```
 
+Como podemos observar, las diferencias entre los datos provistos por el GEOJSON y los datos recolectados por OSM divergen considerablemente. Esto es así de tal manera que solo coinciden ambos datasets en la ubicación de solo dos estacionamientos.
