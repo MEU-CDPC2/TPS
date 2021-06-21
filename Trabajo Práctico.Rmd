@@ -1,10 +1,14 @@
 ---
-title: "Trabajo Práctico Nº1"
+title: "Trabajo Práctico Nº2"
 subtitle: "CDDPC II - UTDT"
 author: "Luis Tisocco & Santiago Soubie"
 date: "Junio 2021"
 output: html_document
 ---
+
+*El Trabajo práctico Nº 2 arranca en la línea 293*
+
+## **TRABAJO PRÁCTICO Nº1**
 
 ```{r include=FALSE}
 library(tidyverse)
@@ -13,7 +17,7 @@ library(ggmap)
 options(scipen = 999) #Anula la notación científica
 ```
 
-## **Introducción**
+### **Introducción**
 
 En el contexto de la actual pandemia de COVID-19 muchos ideales de la planificación urbana se han puesto en duda. Uno de ellos, y quizás el más evidente, tiene que ver con los patrones de uso del suelo de los centros de las grandes ciudades.
 
@@ -286,52 +290,234 @@ ggmap(mapamicrocentro)+
         legend.box.margin = margin(3,6,3,6))
 ```
 
-# ACÁ PODEMOS METER LA INTERSECCIÓN DE LAS COBERTURAS (A MÁS DE 5 MIN DE ESPACIOS VERDES Y A MENOS DE 5 DE ECOBICIS) Y SELECCIONAMOS LOS ESTACIONAMIENTOS PIOLAS.
+--------------------------------------------------------------------------------
 
-
-
-#------------------------
-
+## **TRABAJO PRÁCTICO Nº2**
 
 ```{r include=FALSE}
 library(osmdata)
 ```
 
+**Consignas**
+
+1. *Descargar de OpenStreetMap la grilla de calles para la Ciudad elegida en el ejercicio 1 y mapearla por uno de sus atributos (velocidad mínima, velocidad máxima, cantidad de carriles, etc).*
+
+Primero, creamos una caja de coordenadas de la CABA para decirle a R que nos traiga la info de allí.
+
 ```{r}
-parking_BA_OSM <- opq ("Buenos Aires, Argentina") %>% 
+bbox_CABA <- getbb("Ciudad Autónoma de Buenos Aires, Argentina")
+```
+
+*Nos fijamos que las coordenadas extraídas sena las precisas*
+
+```{r}
+mapa_CABA <- get_stamenmap(bbox = bbox_CABA,
+                          maptype = "terrain",
+                          zoom=12)
+```
+
+```{r}
+ggmap(mapa_CABA)+
+  theme_void()
+```
+
+Segundo, queremos crear un dataset con las calles de CABA. Para ello:
+
+1º Consultamos la info disponible.
+
+```{r}
+CABA_calles <- opq(bbox_CABA) %>% 
+  add_osm_feature(key="highway") 
+```
+
+2º Descargamos la info.
+
+```{r}
+CABA_calles <- osmdata_sf(CABA_calles)
+```
+
+3º Seleccionamos solo las líneas y las asignamos a nuestra lista para que se transfome en un dataset.
+
+```{r}
+CABA_calles <- CABA_calles$osm_lines
+```
+
+Graficamos para ver el resultado
+
+```{r}
+ggmap(mapa_CABA)+
+  geom_sf(data = CABA_calles, color="deepskyblue4", alpha=0.5, inherit.aes = FALSE)+
+  labs(title="Calles de la Ciudad Autónoma de Buenos Aires",
+       caption="Fuente: Open Street Map")+
+  theme_void()
+```
+
+Como vemos, no solo nos descarga las calles de la CABA sino de todo el sistema de coordenadas. Para solucionar ese problema, haremos lo siguiente:
+
+1º Descargamos el límite de la CABA.
+
+```{r}
+bbox_CABA_limite <- getbb("Ciudad Autónoma de Buenos Aires, Argentina", format_out = "sf_polygon")
+```
+
+```{r}
+bbox_CABA_limite <- bbox_CABA_limite$multipolygon
+```
+
+```{r}
+ggmap(mapa_CABA)+
+  geom_sf(data=bbox_CABA_limite, fill=NA, size=1, color="firebrick3", inherit.aes = FALSE)+
+  labs(title="Ciudad Autónoma de Buenos Aires",
+       caption="Fuente: Open Street Map")+
+  theme_void()
+```
+
+2º Intersectamos nuestro dataset de calles con el del límite.
+
+```{r}
+CABA_calles <- st_intersection(CABA_calles, bbox_CABA_limite)
+```
+
+Graficamos
+
+```{r}
+ggmap(mapa_CABA)+
+  geom_sf(data=bbox_CABA_limite, fill=NA, size=1, color="firebrick3", inherit.aes = FALSE)+
+  geom_sf(data = CABA_calles, color="deepskyblue4", alpha=0.5, inherit.aes = FALSE)+
+  labs(title="Calles de la Ciudad Autónoma de Buenos Aires",
+       caption="Fuente: Open Street Map")+
+  theme_void()
+```
+
+Por último, coloreamos nuestras calles de acuerdo con el tipo.
+
+```{r}
+CABA_calles <- mutate(CABA_calles, maxspeed= fct_relevel(maxspeed, "5", "10", "20", "30", "40", "50", "60", "70", "80", "90", "100", "130"))
+
+ggmap(mapa_CABA)+
+  geom_sf(data = filter(CABA_calles, !(is.na(maxspeed))), aes(color=maxspeed), inherit.aes = FALSE)+
+    labs(title="Ciudad Autónoma de Buenos Aires",
+       color="Velocidad máxima (KM/H)",
+       caption="Fuente: Open Street Map")+
+  theme_void()
+```
+
+2. *Descargar de OpenStreetMap una (o más) capas de datos de tipo puntos o polígonos. (Ver catálogo de categorías en https://wiki.openstreetmap.org/wiki/Map_Features)*
+*2. a. Proyectar los datos descargados en un mapa y comentar los resultados: ¿Cómo se distribuyen en la Ciudad?*
+
+En línea con nuestro trabajo anterior, procederemos a descargar los estacionamientos de la CABA.
+
+```{r}
+parking_CABA_OSM <- opq (bbox_CABA) %>% 
+  add_osm_feature(key="building", value="parking")
+parking_CABA_OSM <- osmdata_sf(parking_CABA_OSM)
+parking_CABA_OSM <- parking_CABA_OSM$osm_points
+```
+
+Graficamos para ver su ubicación.
+
+```{r}
+ggmap(mapa_CABA)+
+  geom_sf(data = parking_CABA_OSM, aes(color="Estacionamientos"), inherit.aes = FALSE)+
+  scale_color_manual(values = c("Estacionamientos"="red2"))+
+    labs(title="Ciudad Autónoma de Buenos Aires",
+       color="Referencias",
+       caption="Fuente: Open Street Map")+
+  theme_void()
+```
+
+Al igual que hicimos con las calles, nos quedaremos unicamente con los estacionamientos que se encuentren dentro de la CABA.
+
+```{r}
+parking_CABA_OSM <- st_intersection(parking_CABA_OSM, bbox_CABA_limite)
+```
+
+Nos quedamos solo con los valores únicos
+
+```{r}
+parking_CABA_OSM <- unique(parking_CABA_OSM)
+```
+
+Graficamos para ver los resultados
+
+```{r}
+ggmap(mapa_CABA)+
+  geom_sf(data = parking_CABA_OSM, aes(color="Estacionamientos"), inherit.aes = FALSE)+
+  scale_color_manual(values = c("Estacionamientos"="red2"))+
+    labs(title="Ciudad Autónoma de Buenos Aires",
+       color="Referencias",
+       caption="Fuente: Open Street Map")+
+  theme_void()
+```
+
+Al ver el gráfico anterior, podemos observar que hay algo que no anda bien. Nuestro dataset de estacionamientos contiene 87 registros, aunque solo aparecen geolocalizados unos pocos puntos. Ello puede deverse a que la posición de los mismos esta mal cargada.
+
+No obstante, en Open Street Maps es posible encontrar que los estacionamientos se encuentran divididos en múltiples categorías. Probemos con otra categoría mucho más amplia que la original y repitamos el proceso:
+
+```{r}
+parking_CABA_OSM_B <- opq (bbox_CABA) %>% 
   add_osm_feature(key="amenity", value="parking")
-parking_BA_OSM <- osmdata_sf(parking_BA_OSM) 
-parking_BA_OSM <- parking_BA_OSM$osm_points
+parking_CABA_OSM_B <- osmdata_sf(parking_CABA_OSM_B) 
+parking_CABA_OSM_B <- parking_CABA_OSM_B$osm_points
 ```
 
 ```{r}
-parking_BA_OSM <- parking_BA_OSM %>% select(osm_id, parking, geometry)
+parking_CABA_OSM_B <- st_intersection(parking_CABA_OSM_B, bbox_CABA_limite)
 ```
 
 ```{r}
-parking_BA_OSM <- st_intersection(parking_BA_OSM, barrios, crs=(barrios))
+parking_CABA_OSM_B <- unique(parking_CABA_OSM_B)
+```
 
-parking_BA_OSM_barrio <- parking_BA_OSM %>% 
+Grafiquemos
+
+```{r}
+ggmap(mapa_CABA)+
+  geom_sf(data = parking_CABA_OSM_B, aes(color="Estacionamientos"), inherit.aes = FALSE)+
+  scale_color_manual(values = c("Estacionamientos"="red2"))+
+    labs(title="Ciudad Autónoma de Buenos Aires",
+       color="Referencias",
+       caption="Fuente: Open Street Map")+
+  theme_void()
+```
+
+Como podemos ver en el mapa anterior, la mayor concentración de estacionamientos se da en el corredor que se extiende desde el centro de la CABA hacia el norte. No obstante, es importante reconocer que los enstacionamientos se muesntran distribudios a lo largo y ancho de la ciudad.
+
+2. b. *Hacer un conteo de los ítems de la capa descargada por barrio, mapearlo y compararlo con el conteo de los ítems descargados en el ejercicio anterior: ¿La distribución es similar o hay diferencias? ¿A qué se puede deber?*
+
+Ahora, crucemos nuestro dataset de estacionamientos con el de barrios para conocer su distribución por cada uno de estos últimos.
+
+```{r}
+parking_CABA_OSM_B <- st_transform(parking_CABA_OSM_B, crs = st_crs(barrios))
+```
+
+```{r}
+parking_CABA_OSM_B <- st_join(parking_CABA_OSM_B, barrios)
+```
+
+```{r}
+parking_CABA_OSM_barrio <- parking_CABA_OSM_B %>% 
   group_by(barrio) %>% 
-  summarise(cantidad_OSM=(n())) %>% 
-  as.data.frame() %>% 
+  summarise(Q_estacionamientos=(n())) %>% 
   st_set_geometry(NULL) %>% 
+  as.data.frame() %>% 
+  filter(!is.na(barrio))
 ```
+
 ```{r fig.height=10}
 ggplot()+
-  geom_bar(data=parking_BA_OSM_barrio %>% filter(cantidad_OSM!=0), aes(y=reorder(barrio, -cantidad_OSM), weight=cantidad_OSM, fill=barrio), show.legend = FALSE)+
+  geom_bar(data=parking_CABA_OSM_barrio %>% filter(Q_estacionamientos !=0), aes(y=reorder(barrio, -Q_estacionamientos), weight=Q_estacionamientos, fill=barrio), show.legend = FALSE)+
   scale_fill_viridis_d()+
   labs(x="Cantidad de estacionamientos", 
        y="Barrio",
-       title="¿Cuántos estacionamientos por barrio existen según OSM?", 
+       title="¿Cuántos estacionamientos por barrio existen en la CABA según OSM?", 
        caption="Fuente: OSM")+
   scale_x_continuous(breaks = seq(0, 500, 50))+
   theme_minimal()
 ```
 
-
 ```{r}
-parking_BA <- left_join(barrios, parking_BA_OSM_barrio, by="barrio")
+parking_CABA <- left_join(barrios, parking_CABA_OSM_barrio, by="barrio")
 ```
 
 Visualizamos
@@ -339,8 +525,8 @@ Visualizamos
 ```{r}
 ggplot()+
   geom_sf(data=barrios, fill="white")+
-  geom_sf(data=parking_BA %>% filter(cantidad_OSM!=0), aes(fill=cantidad_OSM), alpha=.5, show.legend = FALSE)+
-  geom_sf_text(data=parking_BA, aes(label=cantidad_OSM), size=4, fontface = "bold")+
+  geom_sf(data=parking_CABA %>% filter(Q_estacionamientos!=0), aes(fill=Q_estacionamientos), alpha=.5, show.legend = FALSE)+
+  geom_sf_text(data=parking_CABA, aes(label=Q_estacionamientos), size=4, fontface = "bold")+
   scale_fill_viridis_c()+
   labs(title="¿Cuántos estacionamientos concesionados hay por barrio según OSM?",
               caption="Fuente: OSM")+
@@ -348,26 +534,43 @@ ggplot()+
   theme(plot.title = element_text( hjust = 0.5))
 ```
 
+Comparemoslo con nuestro GEOJSON original.
 
+```{r}
+ggplot()+
+  geom_sf(data=barrios, fill="white")+
+  geom_sf(data=estacionamientos_barrio %>% filter(cantidad!=0), aes(fill=cantidad), alpha=.5, show.legend = FALSE)+
+  geom_sf_text(data=estacionamientos_barrio, aes(label=cantidad), size=4, fontface = "bold")+
+  scale_fill_viridis_c()+
+  labs(title="¿Cuántos estacionamientos concesionados hay por barrio?",
+              caption="Fuente: GCBA")+
+  theme_void()+
+  theme(plot.title = element_text( hjust = 0.5))
+```
 
+La primer observación que obtenemos es que nuestro N aumento considerablemente. Luego, Si bien la mayor concentración de estacionamientos se da en el eje Centro - Norte de la CABA (siendo Palermo el principal barrio ahora), existe una oferta cosiderable en barrios perífericos como Lugano, Caballito, La Boca, Flores y Villa Soldati.
+
+Estas diferencias pueden deverse a varios factores. Sin embargo, es importante reconocer que, mientras nuestro GEOJSON original nos daba solo la ubicación de los estacionamientos concesionados, el nuevi dataset con datos de OSM ofrece información de todos los tipos de estacionamientos existentes en la CABA.
+
+Veamos las diferencias con mayor precisión:
 
 ```{r}
 estacionamientos_barrio[is.na(estacionamientos_barrio)] <- 0
 
-parking_OSM_GCBA <- left_join(parking_BA_OSM_barrio, estacionamientos_barrio, by="barrio") %>% 
+parking_OSM_GCBA <- left_join(parking_CABA_OSM_barrio, estacionamientos_barrio, by="barrio") %>% 
   rename("cantidad_GCBA"="cantidad") %>% 
-  group_by(barrio, cantidad_OSM, cantidad_GCBA) %>%
-  summarise(diferencia=cantidad_OSM-cantidad_GCBA)
+  group_by(barrio, Q_estacionamientos, cantidad_GCBA) %>%
+  summarise(diferencia= Q_estacionamientos-cantidad_GCBA)
 ```
+
 ```{r}
 head(parking_OSM_GCBA, y=reorder(barrio, -diferencia))
 ```
 
-
 ```{r fig.height=10}
 ggplot()+
-  geom_bar(data=parking_OSM_GCBA, aes(y=reorder(barrio, -cantidad_OSM), weight=cantidad_OSM, fill=barrio), show.legend = FALSE)+
-  geom_bar(data=parking_OSM_GCBA, aes(y=reorder(barrio, -cantidad_OSM), weight=cantidad_GCBA, fill=barrio), fill="red", show.legend = FALSE)+
+  geom_bar(data=parking_OSM_GCBA, aes(y=reorder(barrio, -Q_estacionamientos), weight=Q_estacionamientos, fill=barrio), show.legend = FALSE)+
+  geom_bar(data=parking_OSM_GCBA, aes(y=reorder(barrio, -Q_estacionamientos), weight=cantidad_GCBA, fill=barrio), fill="red", show.legend = FALSE)+
   scale_fill_viridis_d()+
   labs(x="Diferencia (cantidad de estacionamientos)", 
        y="Barrio",
@@ -378,12 +581,10 @@ ggplot()+
   theme_minimal()
 ```
 
-
-
 ```{r}
-parking_microcentro <- parking_BA_OSM %>% 
+parking_microcentro <- parking_CABA_OSM_B %>% 
   filter(barrio=="MONSERRAT" | barrio=="BALVANERA" | barrio=="SAN NICOLAS") %>% 
-  filter(parking!="underground")
+  filter(parking!="underground" | layer!="-1")
 ```
 
 ```{r}
@@ -403,10 +604,4 @@ ggplot()+
         legend.box.background = element_rect(color = "black"),
         legend.box.margin = margin(3,6,3,6))
 ```
-
-
-
-
-
-
 
