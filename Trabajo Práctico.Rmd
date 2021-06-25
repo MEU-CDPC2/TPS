@@ -6,9 +6,22 @@ date: "Junio 2021"
 output: html_document
 ---
 
-*El Trabajo práctico Nº 2 arranca en la línea 293*
 
-## **TRABAJO PRÁCTICO Nº1**
+## Índice
+
+
+
+#### [Trabajo Práctico N°1](#tp_1)
+
+
+#### [Trabajo Práctico N°2](#tp_2)
+
+
+--------------------------------------------------------------------------------
+
+
+### <a id="tp_1"></a>**Trabajo Práctico N°1**
+
 
 ```{r include=FALSE}
 library(tidyverse)
@@ -45,7 +58,7 @@ manzanas <- st_read ("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datas
 
 La pandemia generó grandes transformaciones en las formas de habitar nuestras ciudades. En esta linea, a partir de los cambios en los patrones de movilidad, grandes espacios de la trama urbana dedicados al transporte, como los estacionamientos, quedaron en desuso, provocando así grandes vacíos urbanos, particularmente, en las zonas céntricas. De igual manera, la coyuntura puso en evidencia la falta de espacios verdes existente en la CABA. 
 
-Con el fin de construir una solución que permita reconvertir aquellas superficies obsoletas en espacios verdes y así mejorar la calidad de vida de las personas, en este trabajo analizaremos terriotrialmente la distribución de los estacionamientos urbanos.
+Con el fin de construir una solución que permita reconvertir aquellas superficies obsoletas en espacios verdes y así mejorar la calidad de vida de las personas, en este trabajo analizaremos territorialmente la distribución de los estacionamientos urbanos.
 
 A continuación abriremos los datasets de estacionamientos y de espacios verdes.
 
@@ -69,7 +82,7 @@ nrow(estacionamientos)
 ```
 
 Hay 49 estacionamientos concesionados, de acuerdo a los datos del GCBA.
-Como existen missing values en las columnas de barrio y comuna, procederemos a eliminar dichas columnas y econtrar la información de manera espacial. 
+Como existen missing values en las columnas de barrio y comuna, procederemos a eliminar dichas columnas y refernciar la información de manera espacial. 
 Sólo nos quedaremos con las columnas que nos interesan para el análisis.
 
 ```{r}
@@ -84,7 +97,7 @@ estacionamientos <- estacionamientos %>%
 
 ### ¿Cuántos estacionamientos concesionados hay por barrio?
 
-PAra saber cuantos estacionamientos hay concesionados por barrio, primero haremos una unión espacial de nuestros datasets.
+Para saber cuántos estacionamientos concesionados hay por barrio, primero haremos una unión espacial de nuestros datasets.
 
 ```{r}
 #primero nos aseguramos que ambos datasets se encuentren en el mismo sistema de coordenadas.
@@ -292,7 +305,9 @@ ggmap(mapamicrocentro)+
 
 --------------------------------------------------------------------------------
 
-## **TRABAJO PRÁCTICO Nº2**
+
+### <a id="tp_2"></a>**Trabajo Práctico N°2**
+
 
 ```{r include=FALSE}
 library(osmdata)
@@ -453,7 +468,7 @@ ggmap(mapa_CABA)+
   theme_void()
 ```
 
-Al ver el mapa anterior, podemos observar que hay algo que no anda bien. Nuestro dataset de estacionamientos contiene 87 registros, aunque solo aparecen geolocalizados unos pocos puntos. Ello puede deverse a que la posición de los mismos esta mal cargada.
+Al ver el mapa anterior, podemos observar que hay algo que no anda bien. Nuestro dataset de estacionamientos contiene 87 registros, aunque sólo aparecen geolocalizados unos pocos puntos. Ello puede deberse a que la posición de los mismos está mal cargada.
 
 No obstante, en Open Street Maps es posible encontrar que los estacionamientos se encuentran divididos en múltiples categorías. Probemos con otra categoría mucho más amplia que la original y repitamos el proceso:
 
@@ -557,7 +572,7 @@ ggplot()+
 
 La primer observación que obtenemos es que nuestro N aumento considerablemente. Luego, si bien la mayor concentración de estacionamientos se da en el eje Centro - Norte de la CABA (siendo Palermo el principal barrio ahora), existe una oferta cosiderable en barrios perífericos como Lugano, Caballito, La Boca, Flores y Villa Soldati.
 
-Estas diferencias pueden deverse a varios factores. Sin embargo, es importante reconocer que, mientras nuestro GEOJSON original nos daba solo la ubicación de los estacionamientos concesionados, el nuevo dataset con datos de OSM ofrece información de todos los tipos de estacionamientos existentes en la CABA.
+Estas diferencias pueden deverse a varios factores. Sin embargo, es importante reconocer que, mientras nuestro GEOJSON original nos daba sólo la ubicación de los estacionamientos concesionados, el nuevo dataset con datos de OSM ofrece información de todos los tipos de estacionamientos existentes en la CABA.
 
 Veamos las diferencias con mayor precisión:
 
@@ -588,7 +603,7 @@ ggplot()+
   theme_minimal()
 ```
 
-Mapiemos las diferencias para el área del Microcentro porteño.
+Mapeamos las diferencias para el área del Microcentro porteño.
 
 ```{r}
 parking_microcentro <- parking_CABA_OSM_B %>% 
@@ -614,4 +629,4 @@ ggplot()+
         legend.box.margin = margin(3,6,3,6))
 ```
 
-Como podemos observar, las diferencias entre los datos provistos por el GEOJSON y los datos recolectados por OSM divergen considerablemente. Esto es así de tal manera que solo coinciden ambos datasets en la ubicación de solo dos estacionamientos.
+Como podemos observar, las diferencias entre los datos provistos por el GEOJSON y los datos recolectados por OSM divergen considerablemente. Esto es así de tal manera que ambos sets de datos sólo coinciden en la ubicación de dos estacionamientos.
