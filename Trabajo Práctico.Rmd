@@ -1,5 +1,5 @@
 ---
-title: "Trabajo Práctico Nº2"
+title: "Trabajo Práctico"
 subtitle: "CDDPC II - UTDT"
 author: "Luis Tisocco & Santiago Soubie"
 date: "2° Trimestre 2021"
@@ -7,14 +7,22 @@ output: html_document
 ---
 
 
+
+
+
+
 ## Índice
 
 
 
-#### [Trabajo Práctico N°1](#tp_1)
+   #### [Trabajo Práctico N°1](#tp_1)
 
 
-#### [Trabajo Práctico N°2](#tp_2)
+   #### [Trabajo Práctico N°2](#tp_2)
+
+
+
+
 
 
 --------------------------------------------------------------------------------
@@ -406,18 +414,19 @@ ggmap(mapa_CABA)+
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-Por último, coloreamos nuestras calles de acuerdo con el la velocidad máxima permitida.
+Por último, coloreamos nuestras calles de acuerdo a la velocidad máxima permitida.
 
 ```{r}
 CABA_calles <- mutate(CABA_calles, maxspeed= fct_relevel(maxspeed, "5", "10", "20", "30", "40", "50", "60", "70", "80", "90", "100", "130"))
 
 ggmap(mapa_CABA)+
-  geom_sf(data = filter(CABA_calles, !(is.na(maxspeed))), aes(color=maxspeed), inherit.aes = FALSE)+
+  geom_sf(data = filter(CABA_calles, !(is.na(maxspeed))), aes(color=maxspeed), fill=NA, inherit.aes = FALSE)+
   scale_color_viridis_d()+
     labs(title="Calles de la Ciudad Autónoma de Buenos Aires",
        color="Velocidad máxima (KM/H)",
        caption="Fuente: Open Street Map")+
   theme_void()
+
 ```
 
 2. *Descargar de OpenStreetMap una (o más) capas de datos de tipo puntos o polígonos. (Ver catálogo de categorías en https://wiki.openstreetmap.org/wiki/Map_Features)*
@@ -499,7 +508,7 @@ ggmap(mapa_CABA)+
   theme_void()
 ```
 
-Como podemos ver en el mapa anterior, la mayor concentración de estacionamientos se da en el corredor que se extiende desde el centro de la CABA hacia el norte. No obstante, es importante reconocer que los enstacionamientos se muestran distribudios a lo largo y ancho de la ciudad.
+Como podemos ver en el mapa anterior, la mayor concentración de estacionamientos se da en el corredor que se extiende desde el centro de la CABA hacia el norte. No obstante, es importante reconocer que los estacionamientos se muestran distribudios a lo largo y ancho de la ciudad.
 
 2. b. *Hacer un conteo de los ítems de la capa descargada por barrio, mapearlo y compararlo con el conteo de los ítems descargados en el ejercicio anterior: ¿La distribución es similar o hay diferencias? ¿A qué se puede deber?*
 
@@ -532,7 +541,7 @@ ggplot()+
   scale_fill_viridis_d()+
   labs(x="Cantidad de estacionamientos", 
        y="Barrio",
-       title="¿Cuántos estacionamientos por barrio existen en la CABA según OSM?", 
+       title="¿Cuántos estacionamientos por barrio existen en la CABA \n\ según OSM?", 
        caption="Fuente: OSM")+
   scale_x_continuous(breaks = seq(0, 500, 50))+
   theme_minimal()
