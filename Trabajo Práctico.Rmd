@@ -15,10 +15,10 @@ output: html_document
 
 
 
-   #### [Trabajo Práctico N°1](#tp_1)
+#### [Trabajo Práctico N°1](#tp_1)
 
 
-   #### [Trabajo Práctico N°2](#tp_2)
+#### [Trabajo Práctico N°2](#tp_2)
 
 
 
