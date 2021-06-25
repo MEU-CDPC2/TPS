@@ -2,7 +2,7 @@
 title: "Trabajo Práctico Nº2"
 subtitle: "CDDPC II - UTDT"
 author: "Luis Tisocco & Santiago Soubie"
-date: "Junio 2021"
+date: "2° Trimestre 2021"
 output: html_document
 ---
 
@@ -450,7 +450,7 @@ Al igual que hicimos con las calles, nos quedaremos unicamente con los estaciona
 parking_CABA_OSM <- st_intersection(parking_CABA_OSM, bbox_CABA_limite)
 ```
 
-*Nos quedamos solo con los valores únicos.*
+Nos quedamos solo con los valores únicos.
 
 ```{r}
 parking_CABA_OSM <- unique(parking_CABA_OSM)
