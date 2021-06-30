@@ -658,15 +658,22 @@ Como podemos observar, las diferencias entre los datos provistos por el GEOJSON 
 <<<<<<< HEAD
 
 ```{r include=FALSE}
+
+# ELIMINAR CHUNK
+
 library(tidyverse)
 library(sf)
 ```
 
 ```{r}
+
+# DE ESTE CHUNK SÓLO HAY QUE DEJAR BICIS_2020. AL RESTO LO CARGO PROVISORIAMENTE PARA NO EJECUTAR TODO EL TP
+
+
 barrios <- st_read ("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/barrios.geojson")
 manzanas <- st_read ("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/manzanas.geojson")
 bicis <- st_read("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/bicis.geojson")
-bicis_2020 <- st_read()
+bicis_2020 <- read_csv ("https://github.com/MEU-CDPC2/TPS/blob/main/Datasets/usuarios_ecobici_2020.csv")
 ```
 =======
 ```{r}
@@ -681,3 +688,8 @@ library(lubridate)
 
 3. Análisis Espacial: Analizar la distribución espacial de los datos a partir de al menos 1 mapa de densidad que muestre donde se concentran la mayor cantidad de observaciones. Comparar la densidad de los datos en el tiempo (facetar). ¿Los patrones espaciales de los datos elegidos se mantienen o varían en el tiempo?
 >>>>>>> bc48ee111ba0f061adceb196c8e68fbf2df728cf
+
+```{r}
+prueba <- read_csv("Dataset/usuarios_ecobici_2020.csv")
+```
+
