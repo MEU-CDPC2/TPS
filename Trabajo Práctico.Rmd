@@ -21,6 +21,9 @@ output: html_document
 #### [Trabajo Práctico N°2](#tp_2)
 
 
+#### [Trabajo Práctico N°3](#tp_3)
+
+
 
 
 
@@ -639,3 +642,22 @@ ggplot()+
 ```
 
 Como podemos observar, las diferencias entre los datos provistos por el GEOJSON y los datos recolectados por OSM divergen considerablemente. Esto es así de tal manera que ambos sets de datos sólo coinciden en la ubicación de dos estacionamientos.
+
+
+--------------------------------------------------------------------------------
+
+
+### <a id="tp_3"></a>**Trabajo Práctico N°3**
+
+
+```{r include=FALSE}
+library(tidyverse)
+library(sf)
+```
+
+```{r}
+barrios <- st_read ("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/barrios.geojson")
+manzanas <- st_read ("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/manzanas.geojson")
+bicis <- st_read("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/bicis.geojson")
+bicis_2020 <- st_read()
+```
