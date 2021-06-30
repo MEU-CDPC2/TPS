@@ -21,7 +21,7 @@ output: html_document
 #### [Trabajo Práctico N°2](#tp_2)
 
 
-
+#### [Trabajo Práctico Nº3](#tp_3)
 
 
 
@@ -312,7 +312,6 @@ ggmap(mapamicrocentro)+
 ```
 
 --------------------------------------------------------------------------------
-
 
 ### <a id="tp_2"></a>**Trabajo Práctico N°2**
 
@@ -639,3 +638,20 @@ ggplot()+
 ```
 
 Como podemos observar, las diferencias entre los datos provistos por el GEOJSON y los datos recolectados por OSM divergen considerablemente. Esto es así de tal manera que ambos sets de datos sólo coinciden en la ubicación de dos estacionamientos.
+
+--------------------------------------------------------------------------------
+
+
+### <a id="tp_3"></a>**Trabajo Práctico N°3**
+
+```{r}
+library(lubridate)
+```
+
+*Consignas*
+
+1. Utilizar algún dataset open data de la Ciudad con la que están trabajando que tenga tanto coordenadas como fechas.
+
+2. Análisis Temporal: Realizar al menos 1 gráfico que les permita analizar la temporalidad de los datos. ¿Detectan algún patrón temporal? ¿A qué puede deberse?
+
+3. Análisis Espacial: Analizar la distribución espacial de los datos a partir de al menos 1 mapa de densidad que muestre donde se concentran la mayor cantidad de observaciones. Comparar la densidad de los datos en el tiempo (facetar). ¿Los patrones espaciales de los datos elegidos se mantienen o varían en el tiempo?
