@@ -635,7 +635,9 @@ Como podemos observar, las diferencias entre los datos provistos por el GEOJSON 
 
 --------------------------------------------------------------------------------
 
+
 ### <a id="tp_3"></a>**Trabajo Práctico N°3**
+
 
 ```{r}
 
@@ -654,17 +656,17 @@ library(lubridate)
 
 1. *Utilizar algún dataset open data de la Ciudad con la que están trabajando que tenga tanto coordenadas como fechas.*
 
-En esta parte del trabajo, retomaremos el análisis de las ecobicis y los viajes realizados en el área central de la Ciudad de Buenos Aires. Ello nos permitirá estudiar con mayor preción el nivel de movilidad en el área durante la pandemia y hacer suposiciones sobre como podría impactar la promoción de nuevos espacios verdes en la zona.
+En esta parte del trabajo, retomaremos el análisis de las ecobicis y los viajes realizados en el área central de la Ciudad de Buenos Aires. Ello nos permitirá estudiar con mayor precisión el nivel de movilidad en el área durante la pandemia y hacer suposiciones sobre como podría impactar la promoción de nuevos espacios verdes en la zona.
 
 Con este fin, utilizaremos el datset de viajes en bicicleta del año 2020: 
 
-*ACLARACIÓN: Debido al tamaño del dataset y su imposibilidad de cargarlo a github, optamos por utilizar una versión más pequeña que solo contiene los viajes iniciados en estaciones del Microcentro porteño.*
+*ACLARACIÓN: Debido al tamaño del dataset y su imposibilidad de cargarlo a github, optamos por utilizar una versión más pequeña que solo contiene los viajes iniciados en estaciones del Microcentro porteño.*  
 
 ```{r}
-bicis_2020 <- read_csv("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/bicis_microcentro_2020.csv")
+bicis_2020 <- read_csv("Datasets/bicis_microcentro.csv")
 ```
 
-2. *Análisis Temporal: Realizar al menos 1 gráfico que les permita analizar la temporalidad de los datos. ¿Detectan algún patrón temporal? ¿A qué puede deberse?*.
+2. *Análisis Temporal: Realizar al menos 1 gráfico que les permita analizar la temporalidad de los datos. ¿Detectan algún patrón temporal? ¿A qué puede deberse?*.  
 
 ```{r}
 str(bicis_2020)
@@ -672,9 +674,9 @@ str(bicis_2020)
 
 Cómo podemos ver, nuestro dataset ya cuenta con los registros de fecha y hora en su formato correspondiente, por lo que ya podemos trabajar sobre los datos.
 
-A fin de lograr una mayor precisión temporal, realizaremos algunas otras modificaciones al dataset.
+A fin de lograr una mayor precisión temporal, realizaremos algunas otras modificaciones al dataset.  
 
-1º. Identificamos el día y el mes en el que se realizó cada viaje.
+-   1º. Identificamos el día y el mes en el que se realizó cada viaje.  
 
 ```{r}
 bicis_2020 <- bicis_2020 %>% 
@@ -682,37 +684,56 @@ bicis_2020 <- bicis_2020 %>%
          mes = month(fecha_origen_recorrido, label = TRUE, abbr = FALSE))
 ```
 
-2º. Creamos una columna que contenga la hora de inicio de cada viaje.
+-   2º. Creamos una columna que contenga la hora de inicio de cada viaje.
 
 ```{r}
 bicis_2020 <- bicis_2020 %>% 
   mutate(hora = hour(fecha_origen_recorrido))
 ```
 
-3º. Calculamos la duración de cada recorrido.
+-   3º. Calculamos la duración de cada recorrido.
 
 ```{r}
-head(bicis_2020) #A mi no me corre el head, a vos si?
+head(bicis_2020)
 ```
 
-Cómo vemos, la columna "duración_recorrido" ya cuenta con la información, pero expresada en segundos. Por lo tanto, nosotros solo nos limitaremos a expresarla en minutos.
+Cómo vemos, la columna "duración_recorrido" ya cuenta con la información, pero expresada en segundos. Por lo tanto, sólo nos limitaremos a expresarla en minutos.
 
 ```{r}
-bicis_2020 <- bicis_2020 %>% 
-  mutate(duracion_recorrido = round(duracion_recorrido/60, 2)) #Esto habría que expresarlo en minutos y segs. Intente de varias maneras en internet y no tuve resultado. Lo dejo medio rústico
+bicis_2020 <- bicis_2020 %>%
+  mutate(duracion_minutos = round(as.numeric(as.duration(duracion_recorrido), "minutes"),2)) 
 ```
+  
 
-¿Cúantos minutos duran los viajes en bicicleta iniciados en el microcentro en promedio?
+**¿Cúantos minutos duran los viajes en bicicleta iniciados en el microcentro en promedio?**
 
 ```{r}
-mean(bicis_2020$duracion_recorrido, 2) #Esto no es tan intuitivo como esta expresado (el 21.84533)
+paste(round(mean(bicis_2020$duracion_minutos),2), " minutos es el promedio de duracion de viajes. Sin embargo, la mediana está en ", round(median(bicis_2020$duracion_minutos),2), " minutos, por lo que reconocemos que la distribución de los datos tiene una cola hacia la derecha")
 ```
 
-Veamos como fue la distribución de viajes a lo largo del año pasado
+```{r}
+ggplot(bicis_2020, aes(duracion_minutos)) +
+  geom_histogram(bins=50, fill="orange", alpha=.5, color="black")+
+  labs(x="Duración en minutos", 
+       y="Cantidad de viajes",
+       title="¿Cómo es la distribución de viajes según su duración?", 
+       subtitle = "Expresado en escala logarítica",
+       caption="Fuente: GCBA")+
+  scale_y_log10()+
+  scale_x_log10()+
+  theme_minimal()
+```
+
+
+Notamos la presencia de valores extremos, tanto superiores como inferiores. Esto puede deberse, por ejemplo, a una falla en la aplicación, o a usuarios que desbloquearon una bicicleta y la devolvieron instáneamente. Un análisis profundo sobre la duración de los viajes debería contemplar la limpieza de dichos outliers y trabajar exclusivamente con valores representativos. 
+
+
+
+#### ¿Cómo fue la distribución a lo largo del año? ¿Se reconoce el impacto de la pandemia en el comportamiento de los usuarios?
 
 ```{r}
 ggplot(bicis_2020) + 
-  geom_bar(aes(x = mes), fill="orange") +
+  geom_bar(aes(x = mes), fill="orange", alpha=.5, color="black") +
   scale_y_continuous(limit = c(0, 40000), breaks = seq(0, 40000, 10000))+
   labs(title = "Cantidad de viajes en bicicleta en el Microcentro",
        subtitle = "Año 2020",
@@ -729,7 +750,7 @@ Veamos que sucede a lo largo de las días de la semana.
 
 ```{r}
 ggplot(bicis_2020) + 
-  geom_bar(aes(x = dia), fill="orange") +
+  geom_bar(aes(x = dia), fill="orange", alpha=.5, color="black") +
   scale_y_continuous(limit = c(0, 40000), breaks = seq(0, 40000, 10000))+
   labs(title = "Cantidad de viajes en bicicleta en el Microcentro",
        subtitle = "Año 2020",
@@ -745,7 +766,7 @@ Repitamos el mismo análisis, pero por horas.
 
 ```{r}
 ggplot(bicis_2020) + #No hay ningun caso a las 24? Suspicious
-  geom_bar(aes(x = hora), fill="orange") +
+  geom_bar(aes(x = hora), fill="orange", alpha=.5, color="black") +
   scale_x_continuous(limit = c(0, 24), breaks = seq(1, 24, 1))+
   labs(title = "Cantidad de viajes en bicicleta en el Microcentro",
        subtitle = "Año 2020",
@@ -758,6 +779,29 @@ ggplot(bicis_2020) + #No hay ningun caso a las 24? Suspicious
 Durante el día, el mayor volumen de viajes en bicicleta ocurre a las 13 hs. y se mantiene en niveles similares hasta las 16 hs., cuando comienza a decaer. Como contrapartida, el mínimo volumen se registra entre 3 y 4 de la mañana. 
 
 
-3. Análisis Espacial: Analizar la distribución espacial de los datos a partir de al menos 1 mapa de densidad que muestre donde se concentran la mayor cantidad de observaciones. Comparar la densidad de los datos en el tiempo (facetar). ¿Los patrones espaciales de los datos elegidos se mantienen o varían en el tiempo?
 
+3. *Análisis Espacial: Analizar la distribución espacial de los datos a partir de al menos 1 mapa de densidad que muestre donde se concentran la mayor cantidad de observaciones. Comparar la densidad de los datos en el tiempo (facetar). ¿Los patrones espaciales de los datos elegidos se mantienen o varían en el tiempo?*
+
+
+```{r}
+ggmap(mapamicrocentro) +
+  geom_sf(data=microcentro, aes(fill=MANZANA), fill="gray", alpha=.5, show.legend = FALSE, inherit.aes = FALSE)+
+  stat_density_2d(data = bicis_2020, 
+                  aes(x = lon, y = lat, 
+                      fill = stat(level)), alpha = 0.6, geom = "polygon", contour = TRUE) +
+  labs(title="Densidad de uso de bicis en microcentro",
+       subtitle="Año 2020",
+       caption= "Fuente de datos: BA Data",
+       fill="Cantidad de usos")+
+  theme_void()+
+  scale_fill_viridis_c(alpha=.6)
+```
+
+```{r}
+ggmap(mapamicrocentro) +
+  geom_bin2d(data = bicis_2020, aes(x = lon, y = lat), bins=7, alpha=.7)+
+  scale_fill_viridis_c()+
+  facet_wrap(~mes)+
+  theme_void()
+```
 
