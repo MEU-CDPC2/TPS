@@ -639,15 +639,6 @@ Como podemos observar, las diferencias entre los datos provistos por el GEOJSON 
 ### <a id="tp_3"></a>**Trabajo Práctico N°3**
 
 
-```{r}
-
-# DE ESTE CHUNK SÓLO HAY QUE DEJAR BICIS_2020. AL RESTO LO CARGO PROVISORIAMENTE PARA NO EJECUTAR TODO EL TP
-
-barrios <- st_read ("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/barrios.geojson")
-manzanas <- st_read ("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/manzanas.geojson")
-bicis <- st_read("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/bicis.geojson")
-```
-
 ```{r include=FALSE}
 library(lubridate)
 ```
@@ -660,10 +651,10 @@ En esta parte del trabajo, retomaremos el análisis de las ecobicis y los viajes
 
 Con este fin, utilizaremos el datset de viajes en bicicleta del año 2020: 
 
-*ACLARACIÓN: Debido al tamaño del dataset y su imposibilidad de cargarlo a github, optamos por utilizar una versión más pequeña que solo contiene los viajes iniciados en estaciones del Microcentro porteño.*  
+*ACLARACIÓN: Debido al tamaño del dataset original y su imposibilidad de subirlo a github, optamos por utilizar una versión más pequeña que solo contiene los viajes iniciados en estaciones del Microcentro porteño.*  
 
 ```{r}
-bicis_2020 <- read_csv("Datasets/bicis_microcentro.csv")
+bicis_2020 <- read_csv("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/bicis_microcentro.csv")
 ```
 
 2. *Análisis Temporal: Realizar al menos 1 gráfico que les permita analizar la temporalidad de los datos. ¿Detectan algún patrón temporal? ¿A qué puede deberse?*.  
@@ -672,7 +663,7 @@ bicis_2020 <- read_csv("Datasets/bicis_microcentro.csv")
 str(bicis_2020)
 ```
 
-Cómo podemos ver, nuestro dataset ya cuenta con los registros de fecha y hora en su formato correspondiente, por lo que ya podemos trabajar sobre los datos.
+Como podemos ver, nuestro dataset ya cuenta con los registros de fecha y hora en su formato correspondiente, por lo que ya podemos trabajar sobre los datos.
 
 A fin de lograr una mayor precisión temporal, realizaremos algunas otras modificaciones al dataset.  
 
@@ -697,19 +688,20 @@ bicis_2020 <- bicis_2020 %>%
 head(bicis_2020)
 ```
 
-Cómo vemos, la columna "duración_recorrido" ya cuenta con la información, pero expresada en segundos. Por lo tanto, sólo nos limitaremos a expresarla en minutos.
+Como vemos, la columna "duración_recorrido" ya cuenta con la información, pero expresada en segundos. Por lo tanto, sólo nos limitaremos a traducirla en minutos.
 
 ```{r}
 bicis_2020 <- bicis_2020 %>%
   mutate(duracion_minutos = round(as.numeric(as.duration(duracion_recorrido), "minutes"),2)) 
 ```
   
-
 **¿Cúantos minutos duran los viajes en bicicleta iniciados en el microcentro en promedio?**
 
 ```{r}
 paste(round(mean(bicis_2020$duracion_minutos),2), " minutos es el promedio de duracion de viajes. Sin embargo, la mediana está en ", round(median(bicis_2020$duracion_minutos),2), " minutos, por lo que reconocemos que la distribución de los datos tiene una cola hacia la derecha")
 ```
+
+Ahora, grafiquemos para ver como se distribuyen los viajes según su duración-
 
 ```{r}
 ggplot(bicis_2020, aes(duracion_minutos)) +
@@ -724,17 +716,14 @@ ggplot(bicis_2020, aes(duracion_minutos)) +
   theme_minimal()
 ```
 
-
 Notamos la presencia de valores extremos, tanto superiores como inferiores. Esto puede deberse, por ejemplo, a una falla en la aplicación, o a usuarios que desbloquearon una bicicleta y la devolvieron instáneamente. Un análisis profundo sobre la duración de los viajes debería contemplar la limpieza de dichos outliers y trabajar exclusivamente con valores representativos. 
-
-
 
 #### ¿Cómo fue la distribución a lo largo del año? ¿Se reconoce el impacto de la pandemia en el comportamiento de los usuarios?
 
 ```{r}
 ggplot(bicis_2020) + 
   geom_bar(aes(x = mes), fill="orange", alpha=.5, color="black") +
-  scale_y_continuous(limit = c(0, 40000), breaks = seq(0, 40000, 10000))+
+  scale_y_continuous(limit = c(0, 20000), breaks = seq(0, 20000, 5000))+
   labs(title = "Cantidad de viajes en bicicleta en el Microcentro",
        subtitle = "Año 2020",
        x = "Mes",
@@ -744,14 +733,14 @@ ggplot(bicis_2020) +
   theme(axis.text.x = element_text(face="bold", size = 7))
 ```
 
-Curiosamente, a partir del mes de agosto (a 5 meses de haber arrancado la cuarentena), el volumen de viajes en bicicleta en el microcentro porteño supera al valor de enero, el máximo en el año previo al inicio de la pandemia. Sin embargo, ello no quiere decir que más gente usa la bicicleta que en niveles pre pandemicos. Es importante mencionar que, año tras año, durante los primeros meses del calendario, la circulación en esta área geografica se reduce significativamente en comparación con su volumen habitual del resto del ciclo anual.
+Curiosamente, a partir del mes de agosto (a 5 meses de haber arrancado la cuarentena), el volumen de viajes en bicicleta en el microcentro porteño supera al valor de enero, el máximo en el año previo al inicio de la pandemia. Sin embargo, ello no quiere decir que más gente use la bicicleta que en niveles pre pandemicos. Es importante mencionar que, año tras año, durante los primeros meses del calendario, la circulación en esta área geografica se reduce significativamente en comparación con su volumen habitual del resto del ciclo anual. Por ello, para poder llegar a una conclusión más profunda sobre los parámetros de uso, debiese de compararse la información con la del año 2019 (A los fines de este trabajo, omitiremos este paso por el momento).
 
 Veamos que sucede a lo largo de las días de la semana.
 
 ```{r}
 ggplot(bicis_2020) + 
   geom_bar(aes(x = dia), fill="orange", alpha=.5, color="black") +
-  scale_y_continuous(limit = c(0, 40000), breaks = seq(0, 40000, 10000))+
+  scale_y_continuous(limit = c(0, 20000), breaks = seq(0, 20000, 5000))+
   labs(title = "Cantidad de viajes en bicicleta en el Microcentro",
        subtitle = "Año 2020",
        x = "Día",
@@ -765,9 +754,9 @@ La distribución de viajes por día marca un claro contraste entre los días de 
 Repitamos el mismo análisis, pero por horas.
 
 ```{r}
-ggplot(bicis_2020) + #No hay ningun caso a las 24? Suspicious
+ggplot(bicis_2020)+
   geom_bar(aes(x = hora), fill="orange", alpha=.5, color="black") +
-  scale_x_continuous(limit = c(0, 24), breaks = seq(1, 24, 1))+
+  scale_x_continuous(limit = c(-1, 24), breaks = seq(0, 23, 1))+
   labs(title = "Cantidad de viajes en bicicleta en el Microcentro",
        subtitle = "Año 2020",
        x = "Horas",
@@ -776,12 +765,11 @@ ggplot(bicis_2020) + #No hay ningun caso a las 24? Suspicious
   theme_minimal()
 ```
 
-Durante el día, el mayor volumen de viajes en bicicleta ocurre a las 13 hs. y se mantiene en niveles similares hasta las 16 hs., cuando comienza a decaer. Como contrapartida, el mínimo volumen se registra entre 3 y 4 de la mañana. 
-
-
+Durante el día, el mayor volumen de viajes en bicicleta ocurre a las 12 hs. y se mantiene en niveles similares hasta las 16 hs., cuando comienza a decaer. Como contrapartida, el mínimo volumen se registra entre 3 y 4 de la mañana. 
 
 3. *Análisis Espacial: Analizar la distribución espacial de los datos a partir de al menos 1 mapa de densidad que muestre donde se concentran la mayor cantidad de observaciones. Comparar la densidad de los datos en el tiempo (facetar). ¿Los patrones espaciales de los datos elegidos se mantienen o varían en el tiempo?*
 
+Ahora veamos las estaciones de bicicleta que más fueron utilizadas en el microcentro durante los meses de la pandemia.
 
 ```{r}
 ggmap(mapamicrocentro) +
@@ -789,19 +777,40 @@ ggmap(mapamicrocentro) +
   stat_density_2d(data = bicis_2020, 
                   aes(x = lon, y = lat, 
                       fill = stat(level)), alpha = 0.6, geom = "polygon", contour = TRUE) +
-  labs(title="Densidad de uso de bicis en microcentro",
+  labs(title="Estaciones de ecobicis en el microcentro",
        subtitle="Año 2020",
-       caption= "Fuente de datos: BA Data",
+       caption= "Fuente: BA Data",
        fill="Cantidad de usos")+
   theme_void()+
-  scale_fill_viridis_c(alpha=.6)
+  scale_fill_viridis_c(option="magma", direction=-1, alpha=.6)+
+  theme(plot.title = element_text(hjust = 0.2),
+        plot.subtitle = element_text(size = 11, hjust = 0.1),
+        legend.title = element_text(size=9))
 ```
+
+El gráfico  muestra que durante el 2020 se utilizaron más las estaciones de ecobicis del lado oeste de la Av. 9 de Julio que en la city porteña (algo que a simple vista se correlaciona con los usos de suelos algo direfentes entre ambos sectores del Microcentro). En ese sentido, es particularmente notable la importancia de la estación de Congreso.
+
+Cabe descatar que no se genera un mapa de calor uniforme que cubra toda la superficie porque el agrupamiento de datos puntuales se da pares de coordenadas distantes entre sí (correspondientes a las estaciones).
+
+Ahora veamos como fue la intensidad de usos a lo largo de los meses.
 
 ```{r}
 ggmap(mapamicrocentro) +
   geom_bin2d(data = bicis_2020, aes(x = lon, y = lat), bins=7, alpha=.7)+
-  scale_fill_viridis_c()+
+  scale_fill_viridis_c()+  
+  labs(title="Estaciones de ecobicis en el microcentro",
+       subtitle="Año 2020",
+       caption= "Fuente: BA Data",
+       fill="Cantidad de usos")+
   facet_wrap(~mes)+
-  theme_void()
+  theme_void()+ 
+  theme(plot.title = element_text(hjust = 0.1),
+        plot.subtitle = element_text(size = 11, hjust = 0.05),
+        legend.title = element_text(size=9))
 ```
 
+Al desagregar los datos por mes, notamos que la alta frecuencia de usos de bicis en la estación de Congreso se corresponden principalmente con el mes de Noviembre, momento en el cual se produjeron el mayor uso de las estaciones de ecobicis en el Microcentro.
+
+A su vez, resulta interesante observar como, a medida que los contagios retroceden, las restricciones disminuyen y la actividad aumenta, incrementa el uso de las estaciones de ecobicis. Sin embargo, se muestra un claro clivaje entre las estaciones al oeste de la Av. 9 de Julio y las de la city porteña. Mientras que las primeras muestran un incremento paulatino en la actividad a través de los meses, las segundas parecen mantener un grado de actividad (bajo) a lo largo de todo año.
+
+En este marco, la provisión de nuevos espacios verdes en el microcentro porteño puede resultar en un foco de atracción para las personas y traer mayor dinamismo al área deprimida.
