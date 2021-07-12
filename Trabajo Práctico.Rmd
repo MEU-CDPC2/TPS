@@ -6,6 +6,7 @@ date: "2° Trimestre 2021"
 output: html_document
 ---
 
+
 ## Índice
 
 
@@ -17,6 +18,8 @@ output: html_document
 
 #### [Trabajo Práctico N°3](#tp_3)
 
+
+#### [Trabajo Práctico N°4](#tp_4)
 
 --------------------------------------------------------------------------------
 
@@ -728,7 +731,7 @@ ggplot(bicis_2020) +
        subtitle = "Año 2020",
        x = "Mes",
        y = "Viajes",
-       caption = "Fuente: BA Data")+
+       caption = "ACLARACIÓN: En Abril no se produjeron viajes \n\ Fuente: BA Data")+
   theme_minimal()+
   theme(axis.text.x = element_text(face="bold", size = 7))
 ```
@@ -800,7 +803,7 @@ ggmap(mapamicrocentro) +
   scale_fill_viridis_c()+  
   labs(title="Estaciones de ecobicis en el microcentro",
        subtitle="Año 2020",
-       caption= "Fuente: BA Data",
+       caption= "ACLARACIÓN: En Abril no se produjeron viajes \n\ Fuente: BA Data",
        fill="Cantidad de usos")+
   facet_wrap(~mes)+
   theme_void()+ 
@@ -814,3 +817,44 @@ Al desagregar los datos por mes, notamos que la alta frecuencia de usos de bicis
 A su vez, resulta interesante observar como, a medida que los contagios retroceden, las restricciones disminuyen y la actividad aumenta, incrementa el uso de las estaciones de ecobicis. Sin embargo, se muestra un claro clivaje entre las estaciones al oeste de la Av. 9 de Julio y las de la city porteña. Mientras que las primeras muestran un incremento paulatino en la actividad a través de los meses, las segundas parecen mantener un grado de actividad (bajo) a lo largo de todo año.
 
 En este marco, la provisión de nuevos espacios verdes en el microcentro porteño puede resultar en un foco de atracción para las personas y traer mayor dinamismo al área deprimida.
+
+--------------------------------------------------------------------------------
+
+
+### <a id="tp_4"></a>**Trabajo Práctico N°4**
+
+
+COMENTARIOS PAULA A INCORPORAR: Creo que sería interesante sumar abril en los gráficos, ya que se vería vacío.En el histograma es bastante sencillo: pueden configurar una escala de fecha con scale_x_date() En el caso del mapa, deberían primero manipular (tidyverse) los datos, generando un dataset con cantidad de viajes x mes x estación. Luego debería agregar estaciones con 0 viajes en abril
+
+Previo a realizar cualquier intervención sobre el Microcentro, debemos indagar primero sobre la opinión que tienen porteños de la dotación actual de espacios públicos verdes en la ciudad. Por este motivo, el siguiente trabajo se propone realizar un análisis de redes a fin de identificar las principales nociones de los habitantes de la ciudad en lo respectivo a los espacios verdes del distrito, y, particularmente, los de su área central. 
+
+*CONSIGNAS*
+
+1. *Descargar tweets que se originen en los alrededores de la Ciudad con la que están trabajando.*
+
+Nuestro primer paso será descargar los tweets emitidos en la CABA que contengan las palabras "espacio verde". Para delimitar el área, seleccionamos las coordenadas del parque Centenario y establecemos un radio de 6,5 millas, la distancia que existe en promedio al borde del distrito.
+
+```{r}
+tweets_verdes<- search_tweets(q = "espacio verde",
+              geocode = "-34.60602274602465, -58.433788440208026,6.5mi",
+              include_rts = FALSE,
+              n = 100000,
+              retryonratelimit = TRUE)
+```
+
+2. *Realizar las siguientes consignas:*
+a. *¿Cómo se distribuye la popularidad de los usuarios? ¿Quiénes son los 5 que más seguidores tienen? Graficar.*
+
+b. *¿En qué momento del día se realiza la mayor cantidad de tweets? Graficar.*
+
+c. *Aislando los tweets que poseen coordenadas geográficas (lat y long), crear al menos 1 mapa que muestre posición de los tweets y cantidad de seguidores del usuario que tuitea.*
+
+Para quienes quieran guardar los datos que descarguen pueden usar los siguientes chunk dependiendo del formato que quieran:
+
+```{r}
+saveRDS(midataset, file = "midataset.rds")
+```
+
+```{r}
+write_as_csv(midataset, "midataset.csv", prepend_ids = TRUE, na = "", fileEncoding = "UTF-8")
+```
