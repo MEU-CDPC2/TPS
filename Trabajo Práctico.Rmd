@@ -849,11 +849,11 @@ tweets_verdes <- search_tweets(q = "espacio verde",
 Repetimos el proceso para la palabra "espacio público".
 
 ```{r}
-tweets_microcentro <- search_tweets(q = "microcentro",
-                                    geocode = "-34.606022,-58.433788,6.5mi",
-                                    include_rts = FALSE,
-                                    n = 100000,
-                                    retryonratelimit = TRUE)
+tweets_publicos <- search_tweets(q = "espacio+público",
+                                 geocode = "-34.606022,-58.433788,6.5mi",
+                                 include_rts = FALSE,
+                                 n = 100000,
+                                 retryonratelimit = TRUE)
 ```
 
 Unimos ambos datasets.
@@ -865,11 +865,11 @@ tweets <- union_all(tweets_verdes, tweets_publicos)
 Y, aprovechando que recientemente fue comunicado un plan para revitalizar el microcentro, buscaremos aquellos tweets que contengan la palabra "microcentro".
 
 ```{r}
-tweets_publicos <- search_tweets(q = "espacio+público",
-                                 geocode = "-34.606022,-58.433788,6.5mi",
-                                 include_rts = FALSE,
-                                 n = 100000,
-                                 retryonratelimit = TRUE)
+tweets_microcentro <- search_tweets(q = "microcentro",
+                                    geocode = "-34.606022,-58.433788,6.5mi",
+                                    include_rts = FALSE,
+                                    n = 100000,
+                                    retryonratelimit = TRUE)
 ```
 
 ### MIRA LUIS QUE GUARDE LOS DATASETS COMO ARCHIVOS RDS PARA QUE NO SE NOS VAYAN. SI QUERES CAMBIAR LAS PALABRAS O USAR OTROS DATASETS, ESTA TODO REGIO.
@@ -915,7 +915,9 @@ tweets %>%
   head(10)
 ```
 
-Al observar nuestros datos, podemos ver que los tweets seleccionados poseen un volumen relativamente bajo de retweets. Curiosamente, los tweets más populares de nuestras muestra no fueron escritos por ninguna de las 5 cuentas más populares de nuestra muestra.
+Al observar nuestros datos, podemos ver que los tweets seleccionados poseen un volumen relativamente bajo de retweets. Curiosamente, los tweets más populares de nuestras muestra no fueron escritos por ninguna de las 5 cuentas más populares antes mencionadas.
+
+Luego, en cuanto al contenido, los tweets parecen dividirse en dos grupos: Aquellos que expresan una posición crítica frente a la gestión del GCBA en cuanto a los espacios verdes de la ciudad, y aquellos que refieren a otras cuestiones que poco tienen que ver con la oferta de estos lugares.
 
 b. *¿En qué momento del día se realiza la mayor cantidad de tweets? Graficar.*
 
@@ -965,5 +967,9 @@ leaflet(tweets_geo) %>%
     addTiles() %>% 
     addMarkers(popup = ~paste("user:", screen_name,
                               "followers", followers_count,
-                              "tweet:", text))
+                              "tweet:", text),
+               lat = ~jitter(lat, 50),
+               lng = ~jitter(lng, 50))
 ```
+
+Creo que habría que concluir qeu este es un tema que se pasan por las bolas en las redes.
