@@ -823,38 +823,147 @@ En este marco, la provisión de nuevos espacios verdes en el microcentro porteñ
 
 ### <a id="tp_4"></a>**Trabajo Práctico N°4**
 
+```{r include=FALSE}
+library(rtweet)
+```
+
 
 COMENTARIOS PAULA A INCORPORAR: Creo que sería interesante sumar abril en los gráficos, ya que se vería vacío.En el histograma es bastante sencillo: pueden configurar una escala de fecha con scale_x_date() En el caso del mapa, deberían primero manipular (tidyverse) los datos, generando un dataset con cantidad de viajes x mes x estación. Luego debería agregar estaciones con 0 viajes en abril
 
-Previo a realizar cualquier intervención sobre el Microcentro, debemos indagar primero sobre la opinión que tienen porteños de la dotación actual de espacios públicos verdes en la ciudad. Por este motivo, el siguiente trabajo se propone realizar un análisis de redes a fin de identificar las principales nociones de los habitantes de la ciudad en lo respectivo a los espacios verdes del distrito, y, particularmente, los de su área central. 
+Previo a realizar cualquier intervención sobre el Microcentro, debemos indagar sobre la opinión que tienen porteños sobre de la oferta actual de espacios públicos verdes en la ciudad. Por este motivo, el siguiente trabajo se propone realizar un análisis de redes a fin de identificar las principales tendencias de la opinión pública en lo respectivo a los espacios verdes del distrito, y, particularmente, los de su área central. 
 
 *CONSIGNAS*
 
 1. *Descargar tweets que se originen en los alrededores de la Ciudad con la que están trabajando.*
 
-Nuestro primer paso será descargar los tweets emitidos en la CABA que contengan las palabras "espacio verde". Para delimitar el área, seleccionamos las coordenadas del parque Centenario y establecemos un radio de 6,5 millas, la distancia que existe en promedio al borde del distrito.
+Nuestro primer paso será descargar los tweets originales emitidos en la CABA que contengan las palabras "espacio verde" en cualquier parte de su estructura. Para delimitar el área, seleccionamos las coordenadas del parque Centenario y establecemos un radio de 6,5 millas, la distancia que existe en promedio al borde del distrito.
 
 ```{r}
-tweets_verdes<- search_tweets(q = "espacio verde",
-              geocode = "-34.60602274602465, -58.433788440208026,6.5mi",
-              include_rts = FALSE,
-              n = 100000,
-              retryonratelimit = TRUE)
+tweets_verdes <- search_tweets(q = "espacio verde",
+                               geocode = "-34.606022,-58.433788,6.5mi",
+                               include_rts = FALSE,
+                               n = 100000,
+                               retryonratelimit = TRUE)
 ```
+
+Repetimos el proceso para la palabra "espacio público".
+
+```{r}
+tweets_microcentro <- search_tweets(q = "microcentro",
+                                    geocode = "-34.606022,-58.433788,6.5mi",
+                                    include_rts = FALSE,
+                                    n = 100000,
+                                    retryonratelimit = TRUE)
+```
+
+Unimos ambos datasets.
+
+```{r}
+tweets <- union_all(tweets_verdes, tweets_publicos)
+```
+
+Y, aprovechando que recientemente fue comunicado un plan para revitalizar el microcentro, buscaremos aquellos tweets que contengan la palabra "microcentro".
+
+```{r}
+tweets_publicos <- search_tweets(q = "espacio+público",
+                                 geocode = "-34.606022,-58.433788,6.5mi",
+                                 include_rts = FALSE,
+                                 n = 100000,
+                                 retryonratelimit = TRUE)
+```
+
+### MIRA LUIS QUE GUARDE LOS DATASETS COMO ARCHIVOS RDS PARA QUE NO SE NOS VAYAN. SI QUERES CAMBIAR LAS PALABRAS O USAR OTROS DATASETS, ESTA TODO REGIO.
 
 2. *Realizar las siguientes consignas:*
 a. *¿Cómo se distribuye la popularidad de los usuarios? ¿Quiénes son los 5 que más seguidores tienen? Graficar.*
 
+Ahora veremos la popularidad de los twiteros en cuestión.
+
+```{r}
+ggplot(tweets) +
+  geom_histogram(aes(x = followers_count), fill="lightblue")+
+  scale_y_continuous(limit = c(0, 90), breaks = seq(0, 90, 10))+
+  labs(title = "Cantidad de cuentas de twitter",
+       subtitle = "Por seguidores",
+       y="Cuentas",
+       x="Seguidores",
+       caption = "Fuente: Twitter")+
+  theme_minimal()
+```
+
+A simple vista, la gran mayoría de los twitteros poseen solo un puñado de seguidores. Veamos con mayor profundidad.
+
+Obtenemos un top 10 de los usuarios más populares.
+
+```{r}
+tweets %>% 
+  select(screen_name, followers_count) %>% 
+  distinct() %>% 
+  arrange(desc(followers_count)) %>% 
+  top_n(10)
+```
+
+De nuestra muestra, vemos que el usuario más popular es el GCBA, seguido, en su mayoría, por medios periodísticos y periodistas.
+
+En esta línea, veamos el tweet más popular y su contenido.
+
+```{r}
+tweets %>%
+  select(screen_name, text, retweet_count) %>%
+  distinct() %>% 
+  arrange(desc(retweet_count)) %>% 
+  head(10)
+```
+
+Al observar nuestros datos, podemos ver que los tweets seleccionados poseen un volumen relativamente bajo de retweets. Curiosamente, los tweets más populares de nuestras muestra no fueron escritos por ninguna de las 5 cuentas más populares de nuestra muestra.
+
 b. *¿En qué momento del día se realiza la mayor cantidad de tweets? Graficar.*
+
+Ahora veremos a que hora se twitea con más intensidad. 
+
+ACÁ Habría que ver que onda lo de la Time Zone.
+
+```{r}
+tweets %>%
+  mutate(created_at = ymd_hms(created_at)) %>% 
+  count(hora = hour(created_at)) %>% 
+ggplot() +
+  geom_col(aes(x = hora, y = n), fill="lightblue")+
+  scale_y_continuous(limit = c(0, 12), breaks = seq(0, 12, 2))+
+  scale_x_continuous(limit = c(-1, 24), breaks = seq(0, 23, 1))+
+  labs(title = "Cantidad de tweets",
+       subtitle = "Por horas del día",
+       y="Tweets",
+       x="Horas",
+       caption = "Fuente: Twitter")+
+  theme_minimal()
+```
+
+Podemos ver que la gente twitea más a medida que avanza el día, y llega a un pico de actividad antes de la medianoche.
 
 c. *Aislando los tweets que poseen coordenadas geográficas (lat y long), crear al menos 1 mapa que muestre posición de los tweets y cantidad de seguidores del usuario que tuitea.*
 
-Para quienes quieran guardar los datos que descarguen pueden usar los siguientes chunk dependiendo del formato que quieran:
+Ahora bien, veamos desde donde twittean los usuarios que hablan sobre nuestra temática de interés. Para eso:
+
+1º. Extraemos las coordenadas de nuestros tweets
 
 ```{r}
-saveRDS(midataset, file = "midataset.rds")
+tweets_geo <- lat_lng(tweets)
 ```
 
+Filtramos para solo quedarnos con los tweets que tienen coordenadas precisas.
+
 ```{r}
-write_as_csv(midataset, "midataset.csv", prepend_ids = TRUE, na = "", fileEncoding = "UTF-8")
+tweets_geo <- tweets_geo %>% 
+    filter(!is.na(lat), !is.na(lng))
+```
+
+Graficamos
+
+```{r}
+leaflet(tweets_geo) %>% 
+    addTiles() %>% 
+    addMarkers(popup = ~paste("user:", screen_name,
+                              "followers", followers_count,
+                              "tweet:", text))
 ```
