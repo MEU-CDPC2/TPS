@@ -886,7 +886,6 @@ tweets <- union_all(tweets_verdes, tweets_publicos)
 cat("La cantidad de tweets obtenida para cada una de las búsquedas fue:\n") 
 paste("Espacios verdes: ", length(tweets_verdes))
 paste("Espacio público: ", length(tweets_publicos))
-paste("Microcentro: ", length(tweets_verdes))
 ```
 
 2. *Realizar las siguientes consignas:*  
