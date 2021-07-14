@@ -882,8 +882,10 @@ Unimos ambos datasets.
 tweets <- union_all(tweets_verdes, tweets_publicos)
 ```
 
+  
+La cantidad de tweets obtenida para cada una de las búsquedas fue:  
+
 ```{r}
-cat("La cantidad de tweets obtenida para cada una de las búsquedas fue:\n") 
 paste("Espacios verdes: ", length(tweets_verdes))
 paste("Espacio público: ", length(tweets_publicos))
 ```
