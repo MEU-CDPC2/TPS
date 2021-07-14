@@ -882,22 +882,12 @@ Unimos ambos datasets.
 tweets <- union_all(tweets_verdes, tweets_publicos)
 ```
 
-Y, aprovechando que recientemente fue comunicado un plan para revitalizar el microcentro, buscaremos aquellos tweets que contengan la palabra "microcentro".
-
-```{r}
-tweets_microcentro <- search_tweets(q = "microcentro",
-                                    geocode = "-34.606022,-58.433788,6.5mi",
-                                    include_rts = FALSE,
-                                    n = 100000,
-                                    retryonratelimit = TRUE)
-```
 ```{r}
 cat("La cantidad de tweets obtenida para cada una de las búsquedas fue:\n") 
 paste("Espacios verdes: ", length(tweets_verdes))
-paste("Espacio público: ", length(tweets_verdes))
+paste("Espacio público: ", length(tweets_publicos))
 paste("Microcentro: ", length(tweets_verdes))
 ```
-
 
 2. *Realizar las siguientes consignas:*  
 
@@ -909,9 +899,8 @@ Ahora veremos la popularidad de los twiteros en cuestión.
 ggplot(tweets) +
   geom_histogram(aes(x = followers_count), fill="orange", alpha=.5, color="black")+
   scale_y_continuous(limit = c(0, 90), breaks = seq(0, 90, 10))+
-  scale_y_log10()+
   labs(title = "Cantidad de cuentas de twitter",
-       subtitle = "Por seguidores \nCantidad de cuentas expresada en escala logarítmica",
+       subtitle = "Por seguidores",
        y="Cuentas",
        x="Seguidores",
        caption = "Fuente: Twitter")+
@@ -945,14 +934,14 @@ tweets %>%
 ```
 
 
-Al observar nuestros datos, podemos ver que los tweets seleccionados poseen un volumen relativamente bajo de retweets. Curiosamente, los tweets más populares de nuestras muestra no fueron escritos por ninguna de las 5 cuentas más populares antes mencionadas.  
+Al observar nuestros datos, podemos ver que los tweets seleccionados poseen un volumen relativamente bajo de retweets. Curiosamente, los tweets más populares de nuestras muestra no fueron escritos por ninguna de las 5 cuentas más populares anteriormente mencionadas.  
 
 Luego, en cuanto al contenido, los tweets parecen dividirse en dos grupos: aquellos que expresan una posición crítica frente a la gestión del GCBA en cuanto a los espacios verdes de la ciudad, y aquellos que refieren a otras cuestiones que poco tienen que ver con la oferta de estos lugares.
   
 
 b. *¿En qué momento del día se realiza la mayor cantidad de tweets? Graficar.*
 
-Ahora veremos a que hora se twittea con más intensidad sobre los temas de interés. 
+Ahora veremos a qué hora se twittea con mayor intensidad sobre los temas de interés. 
 
 
 ```{r}
@@ -972,7 +961,6 @@ tweets %>%
 ```
 
 Podemos ver que la gente twittea más a medida que avanza el día, y llega a un pico de actividad en la mitad de la tarde (entre las 16 y 17 hs). A partir de allí comienza a caer la actividad, con otro pico registrado a las 22hs.
-
 
 c. *Aislando los tweets que poseen coordenadas geográficas (lat y long), crear al menos 1 mapa que muestre posición de los tweets y cantidad de seguidores del usuario que tuitea.*
 
@@ -1002,8 +990,6 @@ leaflet(tweets_geo) %>%
                lat = ~jitter(lat, 50),
                lng = ~jitter(lng, 50))
 ```
-
-
 
 Como conclusión, llama la atención la poca relevancia que parece tener la temática de los espacios verdes públicos en Twitter, a pesar de ser un tema de actualidad y suma importancia. Las consultas realizadas no arrojaron una cantidad de resultados suficientes como para entender la opinión popular. Es probable que al momento del análisis la agenda twittera haya estado ocupada con otros temas de interés, como la vacunación de COVID-19 o el fútbol.
 
