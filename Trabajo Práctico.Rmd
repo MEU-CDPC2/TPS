@@ -14,15 +14,19 @@ editor_options:
 
 
 #### [Trabajo Práctico N°1](#tp_1)
-
+  
 
 #### [Trabajo Práctico N°2](#tp_2)
-
+  
 
 #### [Trabajo Práctico N°3](#tp_3)
-
+  
 
 #### [Trabajo Práctico N°4](#tp_4)
+  
+
+#### [Trabajo Práctico N°5](#tp_5)
+  
 
 --------------------------------------------------------------------------------
 
@@ -41,7 +45,7 @@ library(leaflet)
 options(scipen = 999) #Anula la notación científica
 ```
 
-### **Introducción**
+#### **Introducción**
 
 En el contexto de la actual pandemia de COVID-19 muchos ideales de la planificación urbana se han puesto en duda. Uno de ellos, y quizás el más evidente, tiene que ver con los patrones de uso del suelo de los centros de las grandes ciudades.
 
@@ -106,7 +110,7 @@ estacionamientos <- estacionamientos %>%
   st_as_sf(coords = c("lon", "lat"), crs = 4326)
 ```
 
-### ¿Cuántos estacionamientos concesionados hay por barrio?
+#### ¿Cuántos estacionamientos concesionados hay por barrio?
 
 Para saber cuántos estacionamientos concesionados hay por barrio, primero haremos una unión espacial de nuestros datasets.
 
@@ -185,6 +189,7 @@ Luego, nos quedaremos con las manzanas pertenecientes a los barrios del microcen
 ```{r}
 microcentro <- filter(manzanas, barrio=="MONSERRAT" | barrio=="BALVANERA" | barrio=="SAN NICOLAS")
 ```
+
 
 Utilizaremos este último dataset para filtrar los estacionamientos y espacios verdes de la CABA.
 
@@ -653,8 +658,8 @@ Como podemos observar, las diferencias entre los datos provistos por el GEOJSON 
 library(lubridate)
 ```
 
-*Consignas*
-
+**Consignas**
+  
 1. *Utilizar algún dataset open data de la Ciudad con la que están trabajando que tenga tanto coordenadas como fechas.*
 
 En esta parte del trabajo, retomaremos el análisis de las ecobicis y los viajes realizados en el área central de la Ciudad de Buenos Aires. Ello nos permitirá estudiar con mayor precisión el nivel de movilidad en el área durante la pandemia y hacer suposiciones sobre como podría impactar la promoción de nuevos espacios verdes en la zona.
@@ -849,8 +854,8 @@ library(rtweet)
 
 Previo a realizar cualquier intervención sobre el Microcentro, debemos indagar sobre la opinión que tienen porteños sobre de la oferta actual de espacios públicos verdes en la ciudad. Por este motivo, el siguiente trabajo se propone realizar un análisis de redes a fin de identificar las principales tendencias de la opinión pública en lo respectivo a los espacios verdes del distrito, y, particularmente, los de su área central. 
 
-*CONSIGNAS*
-
+**Consignas**
+  
 1. *Descargar tweets que se originen en los alrededores de la Ciudad con la que están trabajando.*
 
 Nuestro primer paso será descargar los tweets originales emitidos en la CABA que contengan las palabras "espacio verde" en cualquier parte de su estructura. Para delimitar el área, seleccionamos las coordenadas del parque Centenario y establecemos un radio de 6,5 millas, la distancia que existe en promedio al borde del distrito.
@@ -992,5 +997,203 @@ leaflet(tweets_geo) %>%
                lng = ~jitter(lng, 50))
 ```
 
-Como conclusión, llama la atención la poca relevancia que parece tener la temática de los espacios verdes públicos en Twitter, a pesar de ser un tema de actualidad y suma importancia. Las consultas realizadas no arrojaron una cantidad de resultados suficientes como para entender la opinión popular. Es probable que al momento del análisis la agenda twittera haya estado ocupada con otros temas de interés, como la vacunación de COVID-19 o el fútbol.
+Como conclusión, llama la atención la poca relevancia que parece tener la temática de los espacios verdes públicos en Twitter, a pesar de ser un tema de actualidad y suma importancia. Las consultas realizadas no arrojaron una cantidad de resultados suficientes como para entender la opinión popular. Es probable que al momento del análisis la agenda twittera haya estado ocupada con otros temas de interés.
+
+
+--------------------------------------------------------------------------------
+
+
+### <a id="tp_5"></a>**Trabajo Práctico N°5**
+
+
+Habiendo identificado las estaciones más frecuentes, el uso anual y el comportamiento de los usuarios a lo largo del día, nos preguntamos
+  
+    ¿Cómo se mueve la gente en bici dentro del microcentro?
+    ¿Existe alguna correlación espacial entre las estaciones origen-destino?
+    ¿Es frecuente la presencia de viajes circulares?
+
+**Consignas**
+  
+  
+a. *Elegir n dataset que contenga viajes origen-destino de la Ciudad con la que están trabajando.*
+
+  
+Para realizar este ejercicio hemos filtrado previamente el dataset original de recorridos de bicis públicas del GCBA. Nos quedamos sólo con los recorridos que iniciaron y finalizaron dentro del microcentro, para entender el comportamiento limitado a nuestra área de estudio.
+
+Una vez identificados los IDs de las estaciones involucradas, procedidos a filtrar los recorridos:
+   
+    
+*filter (id_estacion_origen==c(51, 7, 83, 191, 171, 24, 8, 163, 144, 183, 112, 37, 60, 132))*
+*filter (id_estacion_origen==c(51, 7, 83, 191, 171, 24, 8, 163, 144, 183, 112, 37, 60, 132))*
+
+
+Omitimos este paso debido al gran peso del archivo base.  
+La decisión de limitarnos espacialmente no sólo tiene que ver, entender el comportamiento exclusivamente dentro del área, sino también con reducir el tiempo de cómputo. Sin embargo reconocemos que un análisis más completo debería considerar la influencia del resto de la ciudad. 
+  
+Ahora sí procedemos a cargar el nuevo dataset filtrado: 
+
+```{r}
+bicis_microcentro <- read.csv("Datasets/bicis_microcentro_origen_destino.csv")
+estaciones_bicis <- read.csv("Datasets/estaciones_bici.csv")
+```
+
+```{r}
+head(bicis_microcentro)
+```
+
+
+Notamos que sólo existen 99 recorridos inicados y finalizados dentro del microcentro
+  
+A modo de comparación el análisis previo y para entender el cambio en los patrones de uso:
+  
+**¿Cúantos minutos duran los viajes en bicicleta iniciados y finalizados dentro del microcentro en promedio?**
+
+```{r}
+bicis_microcentro <- bicis_microcentro %>%
+  mutate(duracion_minutos = round(as.numeric(as.duration(duracion_recorrido), "minutes"),2)) 
+```
+
+```{r}
+paste(round(mean(bicis_microcentro$duracion_minutos),2), " minutos es el promedio de duracion de viajes. Sin embargo, la mediana está en ", round(median(bicis_microcentro$duracion_minutos),2), " minutos, por lo que, a al igual que en el análisis correspondiente al TP3, reconocemos un sesgo positivo (cola hacia la derecha)")
+```
+
+Al limitar el área de origen y destino notamos una considerable reducción del tiempo promedio de los viajes.  
+
+```{r}
+paste("La reducción en el tiempo promedio es de un ",  round(((mean(bicis_2020$duracion_minutos)/mean(bicis_microcentro$duracion_minutos)-1)*100),2), "%")
+```
+
+**¿Hay viajes circulares?**
+
+```{r}
+viajes <- bicis_microcentro %>% 
+    group_by(id_estacion_origen, nombre_estacion_origen, id_estacion_destino, nombre_estacion_destino, long_estacion_origen, lat_estacion_origen, long_estacion_destino, lat_estacion_destino) %>% 
+    summarise(cant_viajes = n())
+```
+  
+```{r}
+ggplot() + 
+    geom_tile(data = viajes, aes(x = as.factor(id_estacion_origen), y = as.factor(id_estacion_destino), fill = cant_viajes)) +
+    labs(title="Matriz Origen-Destino",
+       subtitle = "Estaciones de bicis del microcentro porteño",
+       y="Estación de origen",
+       x="Estación de destino",
+       caption = "Fuente: BA Data")+
+  scale_fill_viridis_c()+
+  theme_minimal()
+  
+```
+  
+A simple vista se evidencia que sí hay presencia de viajes circulares y casualmente son los que más mayor frecuencia acumulan, principalmente en las siguientes estaciones:
+
+| Origen-Destino | Nombre de la estación |
+| ----------- | ----------- |
+| 8 | Congreso |
+| 144 | Pueyrredón |
+| 183 | Virrey Cevallos |
+
+  
+Lo miramos más de cerca: 
+
+```{r}
+viajes_ciculares<- viajes[which(viajes$id_estacion_origen == viajes$id_estacion_destino), ]
+
+head(arrange(viajes_ciculares, desc(cant_viajes)))
+```
+
+
+```{r}
+ggplot(viajes_ciculares, aes(y=reorder(nombre_estacion_origen, -cant_viajes), x=cant_viajes)) +
+  geom_bar(stat="identity", fill="orange", alpha=.5, color="black")+
+  labs(title = "Viajes circulares en bici",
+       subtitle = "Estaciones de bicis del microcentro porteño",
+       x = "Cantidad de viajes",
+       y = "Estación",
+       caption = "BA Data")+
+  theme_minimal()
+```
+
+
+```{r}
+viajes_ciculares<- st_as_sf(viajes_ciculares, coords = c("long_estacion_origen", "lat_estacion_origen"), crs = 4326)
+
+ggplot()+
+  geom_sf(data = microcentro, fill="grey96")+
+  geom_sf(data=viajes_ciculares, aes(size=cant_viajes),color="orange", alpha=0.8)+
+  labs(title = "¿Donde se ubican los viajes circulares más frecuentes?",
+       color="Cantidad de viajes",
+       subtitle = "Estaciones de bicis del microcentro porteño",
+       caption = "Fuente: BA Data")+
+  scale_size_continuous(range = c(4, 10), breaks= c(2,4,6,8, 10))+
+  theme_void()
+
+```
+
+
+
+  
+b. *Calcular los 10 recorridos más realizados, describir los resultados obtenidos y hacer un mapa con los ruteos.*
+
+
+```{r}
+top_10 <- viajes %>%
+          arrange(desc(cant_viajes)) %>%
+          head(10)
+```
+
+
+Las 3 estaciones con más viajes coinciden con las estaciones con más viajes circulares
+Procedemos a agregarle la información al dataset que generamos: 
+
+
+```{r}
+library(osrm)
+
+ruteo_bikes <- function(nombre_estacion_origen, long_estacion_origen, lat_estacion_origen,
+                        nombre_estacion_destino, long_estacion_destino, lat_estacion_destino) {
+  
+  ruta <- osrmRoute(src = c(nombre_estacion_origen, long_estacion_origen, lat_estacion_origen),
+                    dst = c(nombre_estacion_destino, long_estacion_destino, lat_estacion_destino), 
+                    returnclass = "sf",
+                    overview = "full",
+                    osrm.profile = "bike")
+  
+  cbind(ORIGEN = nombre_estacion_origen, DESTINO = nombre_estacion_destino, ruta)
+}
+```
+
+```{r}
+ruteo_top_10 <- list(top_10$nombre_estacion_origen, top_10$long_estacion_origen, top_10$lat_estacion_origen,
+                   top_10$nombre_estacion_destino, top_10$long_estacion_destino, top_10$lat_estacion_destino)
+```
+
+```{r}
+ruteo_top_10 <- pmap(ruteo_top_10, ruteo_bikes) %>% 
+  reduce(rbind)
+```
+
+
+```{r}
+summary(ruteo_top_10) 
+```
+
+```{r}
+ggplot()+
+  geom_sf(data = microcentro, fill="grey96")+
+  geom_sf(data=ruteo_top_10, aes(color=duration), size=2, inherit.aes = FALSE)+
+  labs(title="Top 20 Recorridos más Realizados en Bicicleta",
+       subtitle="Blue Bike - Boston",
+       caption="Fuente: https://www.bluebikes.com/system-data")+
+  scale_color_viridis_c(direction=-1)+
+  theme_void()
+
+
+#ESTE GRAFICO NO ESTA SALIENDO BIEN +
+#ESTARIA BUENO USAR GGMAP Y LEAFLET
+```
+
+
+
+
+
 
