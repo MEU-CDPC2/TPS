@@ -192,7 +192,7 @@ microcentro <- filter(manzanas, barrio=="MONSERRAT" | barrio=="BALVANERA" | barr
 
 Utilizaremos este último dataset para filtrar los estacionamientos y espacios verdes de la CABA.
 
-```{r message=FALSE}
+```{r message=FALSE, warning=FALSE}
 estacionamientos <- st_intersection(estacionamientos, microcentro)
 espacioverde <- st_intersection(espacioverde, microcentro)
 ```
@@ -281,7 +281,7 @@ mapamicrocentro <- get_stamenmap(bbox = bbox_microcentro,
 ecobicis <- st_read("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/bicis.geojson")
 ```
 
-```{r message=FALSE}
+```{r message=FALSE, warning=FALSE}
 ecobicis <- st_intersection(ecobicis, microcentro)
 ```
 
@@ -296,7 +296,7 @@ isocronosbicisjuntasunion <- st_as_sf(isocronosbicisjuntasunion) %>%
 
 Grafiquemos.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 ggmap(mapamicrocentro)+
   geom_sf(data = microcentro, fill="grey96", inherit.aes = FALSE)+
   geom_sf(data = espacioverde, fill="mediumseagreen", inherit.aes = FALSE)+
@@ -334,7 +334,7 @@ library(osmdata)
 
 Primero, creamos la caja de coordenadas de la CABA.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 bbox_CABA <- getbb("Ciudad Autónoma de Buenos Aires, Argentina")
 ```
 
@@ -374,7 +374,7 @@ CABA_calles <- CABA_calles$osm_lines
 
 Graficamos para ver el resultado
 
-```{r}
+```{r message=FALSE}
 ggmap(mapa_CABA)+
   geom_sf(data = CABA_calles, color="deepskyblue4", alpha=0.5, inherit.aes = FALSE)+
   labs(title="Calles de la Ciudad Autónoma de Buenos Aires",
@@ -395,7 +395,7 @@ bbox_CABA_limite <- getbb("Ciudad Autónoma de Buenos Aires, Argentina", format_
 bbox_CABA_limite <- bbox_CABA_limite$multipolygon
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 ggmap(mapa_CABA)+
   geom_sf(data=bbox_CABA_limite, fill=NA, size=1, color="firebrick3", inherit.aes = FALSE)+
   labs(title="Ciudad Autónoma de Buenos Aires",
@@ -405,13 +405,13 @@ ggmap(mapa_CABA)+
 
 2º Intersectamos nuestro dataset de calles con el del límite.
 
-```{r message=FALSE}
+```{r message=FALSE, warning=FALSE}
 CABA_calles <- st_intersection(CABA_calles, bbox_CABA_limite)
 ```
 
 Graficamos.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 ggmap(mapa_CABA)+
   geom_sf(data=bbox_CABA_limite, fill=NA, size=1, color="firebrick3", inherit.aes = FALSE)+
   geom_sf(data = CABA_calles, color="deepskyblue4", alpha=0.5, inherit.aes = FALSE)+
@@ -423,7 +423,7 @@ ggmap(mapa_CABA)+
 
 Por último, coloreamos nuestras calles de acuerdo a la velocidad máxima permitida.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 CABA_calles <- mutate(CABA_calles, maxspeed= fct_relevel(maxspeed, "5", "10", "20", "30", "40", "50", "60", "70", "80", "90", "100", "130"))
 
 ggmap(mapa_CABA)+
@@ -450,7 +450,7 @@ parking_CABA_OSM <- parking_CABA_OSM$osm_points
 
 Graficamos para ver su ubicación.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 ggmap(mapa_CABA)+
   geom_sf(data = parking_CABA_OSM, aes(color="Estacionamientos"), inherit.aes = FALSE)+
   scale_color_manual(values = c("Estacionamientos"="red2"))+
@@ -462,7 +462,7 @@ ggmap(mapa_CABA)+
 
 Al igual que hicimos con las calles, nos quedaremos unicamente con los estacionamientos que se encuentren dentro de la CABA.
 
-```{r message=FALSE}
+```{r message=FALSE, warning=FALSE}
 parking_CABA_OSM <- st_intersection(parking_CABA_OSM, bbox_CABA_limite)
 ```
 
@@ -474,7 +474,7 @@ parking_CABA_OSM <- unique(parking_CABA_OSM)
 
 Graficamos para ver los resultados.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 ggmap(mapa_CABA)+
   geom_sf(data = parking_CABA_OSM, aes(color="Estacionamientos"), inherit.aes = FALSE)+
   scale_color_manual(values = c("Estacionamientos"="red2"))+
@@ -495,7 +495,7 @@ parking_CABA_OSM_B <- osmdata_sf(parking_CABA_OSM_B)
 parking_CABA_OSM_B <- parking_CABA_OSM_B$osm_points
 ```
 
-```{r message=FALSE}
+```{r message=FALSE, warning=FALSE}
 parking_CABA_OSM_B <- st_intersection(parking_CABA_OSM_B, bbox_CABA_limite)
 ```
 
@@ -505,7 +505,7 @@ parking_CABA_OSM_B <- unique(parking_CABA_OSM_B)
 
 Grafiquemos
 
-```{r}
+```{r message=FALSE}
 ggmap(mapa_CABA)+
   geom_sf(data = parking_CABA_OSM_B, aes(color="Estacionamientos"), inherit.aes = FALSE)+
   scale_color_manual(values = c("Estacionamientos"="red2"))+
@@ -531,7 +531,7 @@ parking_CABA_OSM_B <- st_join(parking_CABA_OSM_B, barrios)
 
 Agrupemos los casos por barrio.
 
-```{r message=FALSE}
+```{r message=FALSE, warning=FALSE}
 parking_CABA_OSM_barrio <- parking_CABA_OSM_B %>% 
   group_by(barrio) %>% 
   summarise(Q_estacionamientos=(n())) %>% 
@@ -560,7 +560,7 @@ parking_CABA <- left_join(barrios, parking_CABA_OSM_barrio, by="barrio")
 
 Visualizamos.
 
-```{r warning=FALSE}
+```{r message=FALSE, warning=FALSE}
 ggplot()+
   geom_sf(data=barrios, fill="white")+
   geom_sf(data=parking_CABA %>% filter(Q_estacionamientos!=0), aes(fill=Q_estacionamientos), alpha=.5, show.legend = FALSE)+
@@ -668,7 +668,7 @@ Con este fin, utilizaremos el datset de viajes en bicicleta del año 2020:
 
 *ACLARACIÓN: Debido al tamaño del dataset original y su imposibilidad de subirlo a github, optamos por utilizar una versión más pequeña que solo contiene los viajes iniciados en estaciones del Microcentro porteño.*  
 
-```{r message=FALSE}
+```{r message=FALSE, warning=FALSE}
 bicis_2020 <- read_csv("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/bicis_microcentro.csv")
 ```
 
@@ -798,7 +798,7 @@ Durante el día, el mayor volumen de viajes en bicicleta ocurre a las 12 hs. y s
 
 Ahora veamos las estaciones de bicicleta que más fueron utilizadas en el microcentro durante los meses de la pandemia.
 
-```{r warning=FALSE}
+```{r message=FALSE, warning=FALSE}
 ggmap(mapamicrocentro) +
   geom_sf(data=microcentro, aes(fill=MANZANA), fill="gray", alpha=.5, show.legend = FALSE, inherit.aes = FALSE)+
   stat_density_2d(data = bicis_2020, 
@@ -902,7 +902,7 @@ a. *¿Cómo se distribuye la popularidad de los usuarios? ¿Quiénes son los 5 q
 
 Ahora veremos la popularidad de los twiteros en cuestión.
 
-```{r eval=FALSE}
+```{r eval=FALSE, message=FALSE, warning=FALSE}
 ggplot(tweets) +
   geom_histogram(aes(x = followers_count), fill="orange", alpha=.5, color="black")+
   scale_y_continuous(limit = c(0, 90), breaks = seq(0, 90, 10))+
@@ -948,7 +948,7 @@ b. *¿En qué momento del día se realiza la mayor cantidad de tweets? Graficar.
 
 Ahora veremos a qué hora se twittea con mayor intensidad sobre los temas de interés. 
 
-```{r eval=FALSE}
+```{r eval=FALSE, message=FALSE, warning=FALSE}
 tweets %>%
   count(hora = hour(with_tz(created_at, "America/Argentina/Buenos_Aires"))) %>% 
   ggplot() +
@@ -1020,7 +1020,7 @@ La decisión de limitarnos espacialmente no sólo tiene que ver, entender el com
 
 Ahora sí, procedemos a cargar el nuevo dataset filtrado: 
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 viajesbicis_microcentro <- read.csv("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/bicis_microcentro_origen_destino.csv", stringsAsFactors = TRUE, encoding = "UTF-8") #Solo 99 viajes hubo en todo 2020 en el microcentro???
 ```
 
@@ -1034,18 +1034,18 @@ Indaguemos con mayor profundidad las característas que presentan los viajes den
   
 **¿Cúantos minutos duran los viajes en bicicleta iniciados y finalizados dentro del microcentro en promedio?**
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 viajesbicis_microcentro <- viajesbicis_microcentro %>%
   mutate(duracion_minutos = round(as.numeric(as.duration(duracion_recorrido), "minutes"),2)) 
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 paste(round(mean(viajesbicis_microcentro$duracion_minutos),2), "minutos es el promedio de duracion de los viajes realizados en el área central de la CABA. Sin embargo, la mediana está en", round(median(viajesbicis_microcentro$duracion_minutos),2), "minutos, por lo que, al igual que en el análisis correspondiente al TP3, reconocemos un sesgo positivo frente a valores extremos.")
 ```
 
 Al limitar el área de origen y destino notamos una considerable reducción del tiempo promedio de los viajes.  
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 paste("La reducción en el tiempo promedio es de un ",  round(((mean(bicis_2020$duracion_minutos)/mean(viajesbicis_microcentro$duracion_minutos)-1)*100),2), "%")
 ```
 
@@ -1061,7 +1061,7 @@ viajes <- viajesbicis_microcentro %>%
 
 2º. Graficamos la distribución de viajes entre estaciones.
   
-```{r}
+```{r message=FALSE, warning=FALSE}
 ggplot() + 
   geom_tile(data = viajes, aes(x = as.factor(id_estacion_origen), y = as.factor(id_estacion_destino), fill = cant_viajes)) +
   labs(title="Matriz Origen-Destino",
@@ -1077,7 +1077,7 @@ ggplot() +
   
 A simple vista, observamos una distribución pareja de viajes entre estaciones del microcentro. No obstante, podemos evidenciar que existe una considerable presencia de viajes circulares, principalmente, para las estaciones 8 (Congreso), 144 (Pueyrredon) y 183 (Virrey Cevallos).
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 viajes %>% 
   arrange(desc(cant_viajes)) %>% 
   head(3)
@@ -1085,7 +1085,7 @@ viajes %>%
 
 Veamoslo de otra manera:
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 viajes_top10 <- viajes %>% 
   mutate(viajes_circulares = if_else(id_estacion_origen==id_estacion_destino, "si", "no"),
          ruta = paste("Desde", nombre_estacion_origen, "\n Hasta", nombre_estacion_destino)) %>%
@@ -1093,7 +1093,7 @@ viajes_top10 <- viajes %>%
   head(10)
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 ggplot(viajes_top10, aes(y=reorder(ruta, -cant_viajes), x=cant_viajes, fill=viajes_top10$viajes_circulares)) +
   geom_bar(stat="identity", alpha=.5, color="black")+
   scale_x_continuous(breaks = seq(0,12,3),
@@ -1115,19 +1115,19 @@ Ahora, veamos la distribución de los viajes circulares en el territorio.
 
 1º. Creemos un dataset que contenga solo viajes circulares.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 circulares <- viajes[which(viajes$id_estacion_origen == viajes$id_estacion_destino), ]
 ```
 
 2º. Transformemos nuestro dataset en uno espacial.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 circulares<- st_as_sf(circulares, coords = c("long_estacion_origen", "lat_estacion_origen"), crs = 4326)
 ```
 
 3º. Grafiquemos.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 ggplot()+
   geom_sf(data = microcentro, fill="grey96")+
   geom_sf(data = espacioverde, fill="springgreen2")+
@@ -1145,7 +1145,7 @@ b. *Calcular los 10 recorridos más realizados, describir los resultados obtenid
 
 Como vimos anteriormente, los 10 recorridos más realizados son:
 
-```{r message=FALSE}
+```{r message=FALSE, warning=FALSE}
 viajes_top10 %>% 
   select(ruta, cant_viajes, viajes_circulares)
 ```
@@ -1158,7 +1158,7 @@ library(osrm)
 
 1º. Creamos una función que calcule las rutas entre estaciones de Ecobicis.
 
-```{r message=FALSE}
+```{r message=FALSE, warning=FALSE}
 ruteo_bikes <- function(nombre_estacion_origen, long_estacion_origen, lat_estacion_origen,
                         nombre_estacion_destino, long_estacion_destino, lat_estacion_destino) {
   
@@ -1173,20 +1173,20 @@ ruteo_bikes <- function(nombre_estacion_origen, long_estacion_origen, lat_estaci
 
 2º. Generamos una lista que contenga los casos a analizar.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 ruteo_top_10 <- list(viajes_top10$nombre_estacion_origen, viajes_top10$long_estacion_origen, viajes_top10$lat_estacion_origen, viajes_top10$nombre_estacion_destino, viajes_top10$long_estacion_destino, viajes_top10$lat_estacion_destino)
 ```
 
 3º. Aplicamos nuestra función.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 ruteo_top_10 <- pmap(ruteo_top_10, ruteo_bikes) %>% 
   reduce(rbind)
 ```
 
 4º. Graficamos.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 ggmap(mapamicrocentro)+
   geom_sf(data=ruteo_top_10, aes(color=duration), size=2, inherit.aes = FALSE)+
   geom_sf(data = ecobicis, aes(fill="Ecobicis"), color="orange", size=4, inherit.aes = FALSE)+
@@ -1200,7 +1200,7 @@ ggmap(mapamicrocentro)+
   theme_void()
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 paleta <- c(low="gold", high= "red")
 
 leaflet(ruteo_top_10) %>%
