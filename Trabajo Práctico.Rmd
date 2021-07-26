@@ -34,9 +34,8 @@ editor_options:
 ### <a id="tp_1"></a>**Trabajo Práctico N°1**
 
 
-
 ```{r include=FALSE}
-sf::sf_use_s2(FALSE)
+sf::sf_use_s2(FALSE) #Qué es esto, Luis?
 library(tidyverse)
 library(sf)
 library(ggmap)
@@ -279,15 +278,15 @@ mapamicrocentro <- get_stamenmap(bbox = bbox_microcentro,
 ```
 
 ```{r message=FALSE}
-bicis <- st_read("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/bicis.geojson")
+ecobicis <- st_read("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/bicis.geojson")
 ```
 
 ```{r message=FALSE}
-bicis <- st_intersection(bicis, microcentro)
+ecobicis <- st_intersection(ecobicis, microcentro)
 ```
 
-```{rmessage=FALSE}
-isocronosbicis <- map(1:nrow(bicis),function(x) {cat("Procesando: ",x,"\r")
+```{r message=FALSE}
+isocronosbicis <- map(1:nrow(ecobicis),function(x) {cat("Procesando: ",x,"\r")
   isoline(bicis[x,], transport_mode = "pedestrian",range_type = "time",range = 60*5)})
 isocronosbicisjuntas <- do.call(rbind,isocronosbicis)
 isocronosbicisjuntasunion <-  st_union(isocronosbicisjuntas)
@@ -301,7 +300,7 @@ Grafiquemos.
 ggmap(mapamicrocentro)+
   geom_sf(data = microcentro, fill="grey96", inherit.aes = FALSE)+
   geom_sf(data = espacioverde, fill="mediumseagreen", inherit.aes = FALSE)+
-  geom_sf(data=bicis, aes(color="Ecobicis"), size=2, inherit.aes = FALSE)+
+  geom_sf(data = ecobicis, aes(color="Ecobicis"), size=2, inherit.aes = FALSE)+
   geom_sf(data = estacionamientos, aes(color="Estacionamientos"), size=2, inherit.aes = FALSE)+
   geom_sf(data = isocronosbicisjuntasunion, aes(fill="A 5 min o menos a pie de una estación de Ecobicis"), color="coral1", alpha=0.20, color="black", inherit.aes = FALSE)+
   scale_fill_manual(values = c("A 5 min o menos a pie de una estación de Ecobicis"="chocolate2"))+
@@ -663,7 +662,7 @@ library(lubridate)
   
 1. *Utilizar algún dataset open data de la Ciudad con la que están trabajando que tenga tanto coordenadas como fechas.*
 
-En esta parte del trabajo, retomaremos el análisis de las ecobicis y los viajes realizados en el área central de la Ciudad de Buenos Aires. Ello nos permitirá estudiar con mayor precisión el nivel de movilidad en el área durante la pandemia y hacer suposiciones sobre como podría impactar la promoción de nuevos espacios verdes en la zona.
+En esta parte del trabajo, retomaremos el análisis de las Ecobicis y los viajes realizados en el área central de la Ciudad de Buenos Aires. Ello nos permitirá estudiar con mayor precisión el nivel de movilidad en el área durante la pandemia y hacer suposiciones sobre como podría impactar la promoción de nuevos espacios verdes en la zona.
 
 Con este fin, utilizaremos el datset de viajes en bicicleta del año 2020: 
 
@@ -805,7 +804,7 @@ ggmap(mapamicrocentro) +
   stat_density_2d(data = bicis_2020, 
                   aes(x = lon, y = lat, 
                       fill = stat(level)), alpha = 0.6, geom = "polygon", contour = TRUE) +
-  labs(title="Estaciones de ecobicis en el microcentro",
+  labs(title="Estaciones de Ecobicis en el microcentro",
        subtitle="Año 2020",
        caption= "Fuente: BA Data",
        fill="Cantidad de usos")+
@@ -816,7 +815,7 @@ ggmap(mapamicrocentro) +
         legend.title = element_text(size=9))
 ```
 
-El gráfico  muestra que durante el 2020 se utilizaron más las estaciones de ecobicis del lado oeste de la Av. 9 de Julio que en la city porteña (algo que a simple vista se correlaciona con los usos de suelos algo direfentes entre ambos sectores del Microcentro). En ese sentido, es particularmente notable la importancia de la estación de Congreso.
+El gráfico  muestra que durante el 2020 se utilizaron más las estaciones de Ecobicis del lado oeste de la Av. 9 de Julio que en la city porteña (algo que a simple vista se correlaciona con los usos de suelos algo direfentes entre ambos sectores del Microcentro). En ese sentido, es particularmente notable la importancia de la estación de Congreso.
 
 Cabe descatar que no se genera un mapa de calor uniforme que cubra toda la superficie porque el agrupamiento de datos puntuales se da pares de coordenadas distantes entre sí (correspondientes a las estaciones).
 
@@ -826,7 +825,7 @@ Ahora veamos como fue la intensidad de usos a lo largo de los meses.
 ggmap(mapamicrocentro) +
   geom_bin2d(data = bicis_2020, aes(x = lon, y = lat), bins=7, alpha=.7)+
   scale_fill_viridis_c()+  
-  labs(title="Estaciones de ecobicis en el microcentro",
+  labs(title="Estaciones de Ecobicis en el microcentro",
        subtitle="Año 2020",
        caption= "ACLARACIÓN: En Abril no se produjeron viajes \n\ Fuente: BA Data",
        fill="Cantidad de usos")+
@@ -837,9 +836,9 @@ ggmap(mapamicrocentro) +
         legend.title = element_text(size=9))
 ```
 
-Al desagregar los datos por mes, notamos que la alta frecuencia de usos de bicis en la estación de Congreso se corresponden principalmente con el mes de Noviembre, momento en el cual se produjeron el mayor uso de las estaciones de ecobicis en el Microcentro.
+Al desagregar los datos por mes, notamos que la alta frecuencia de usos de bicis en la estación de Congreso se corresponden principalmente con el mes de Noviembre, momento en el cual se produjeron el mayor uso de las estaciones de Ecobicis en el Microcentro.
 
-A su vez, resulta interesante observar como, a medida que los contagios retroceden, las restricciones disminuyen y la actividad aumenta, incrementa el uso de las estaciones de ecobicis. Sin embargo, se muestra un claro clivaje entre las estaciones al oeste de la Av. 9 de Julio y las de la city porteña. Mientras que las primeras muestran un incremento paulatino en la actividad a través de los meses, las segundas parecen mantener un grado de actividad (bajo) a lo largo de todo año.
+A su vez, resulta interesante observar como, a medida que los contagios retroceden, las restricciones disminuyen y la actividad aumenta, incrementa el uso de las estaciones de Ecobicis. Sin embargo, se muestra un claro clivaje entre las estaciones al oeste de la Av. 9 de Julio y las de la city porteña. Mientras que las primeras muestran un incremento paulatino en la actividad a través de los meses, las segundas parecen mantener un grado de actividad (bajo) a lo largo de todo año.
 
 En este marco, la provisión de nuevos espacios verdes en el microcentro porteño puede resultar en un foco de atracción para las personas y traer mayor dinamismo al área deprimida.
 
@@ -1005,140 +1004,159 @@ Como conclusión, llama la atención la poca relevancia que parece tener la tem�
 ### <a id="tp_5"></a>**Trabajo Práctico N°5**
 
 
-Habiendo identificado las estaciones más frecuentes, el uso anual y el comportamiento de los usuarios a lo largo del día, nos preguntamos:
+Luego de haber identificado las estaciones de Ecobicis más frecuentadas del microcentro y el comportamiento de los usuarios a lo largo del año 2020, en este trabajo nos preguntamos:
   
-    ¿Cómo se movió la gente en bici dentro del microcentro?
+    ¿Cúales fueron los viajes en bicicleta más comunes dentro del microcentro?
     ¿Existe alguna correlación espacial entre las estaciones origen-destino?
-    ¿Es frecuente la presencia de viajes circulares?
+    ¿Cuán frecuentes son los viajes circulares en el área?
 
 **Consignas**
-  
-  
+
 a. *Elegir un dataset que contenga viajes origen-destino de la Ciudad con la que están trabajando.*
 
-  
-Para realizar este ejercicio hemos filtrado previamente el dataset original de recorridos de bicis públicas del GCBA. Nos quedamos sólo con los recorridos que iniciaron y finalizaron dentro del microcentro, para entender el comportamiento limitado a nuestra área de estudio.
+Para realizar este ejercicio, utilizamos un dataset previamente filtrado de recorridos de bicicletas públicas del GCBA. A diferencia del dataset empleado anterioremente durante la cursada, en esta oportunidad, nos quedamos sólo con los recorridos que iniciaron y finalizaron dentro del microcentro porteño. Omitimos este paso debido al gran peso del archivo base.
 
-Una vez identificados los IDs de las estaciones involucradas, procedidos a filtrar los recorridos:
-   
-    
-*filter (id_estacion_origen==c(51, 7, 83, 191, 171, 24, 8, 163, 144, 183, 112, 37, 60, 132))*
-*filter (id_estacion_origen==c(51, 7, 83, 191, 171, 24, 8, 163, 144, 183, 112, 37, 60, 132))*
+La decisión de limitarnos espacialmente no sólo tiene que ver, entender el comportamiento exclusivamente dentro del área, sino también con reducir el tiempo de cómputo. Sin embargo, reconocemos que un análisis más completo debería considerar la influencia del resto de la ciudad. 
 
-
-Omitimos este paso debido al gran peso del archivo base.
-
-La decisión de limitarnos espacialmente no sólo tiene que ver, entender el comportamiento exclusivamente dentro del área, sino también con reducir el tiempo de cómputo. Sin embargo reconocemos que un análisis más completo debería considerar la influencia del resto de la ciudad. 
-  
-Ahora sí procedemos a cargar el nuevo dataset filtrado: 
+Ahora sí, procedemos a cargar el nuevo dataset filtrado: 
 
 ```{r}
-bicis_microcentro <- read.csv("Datasets/bicis_microcentro_origen_destino.csv")
-estaciones_bicis <- read.csv("Datasets/estaciones_bici.csv")
+viajesbicis_microcentro <- read.csv("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/bicis_microcentro_origen_destino.csv", stringsAsFactors = TRUE, encoding = "UTF-8") #Solo 99 viajes hubo en todo 2020 en el microcentro???
 ```
 
 ```{r}
-head(bicis_microcentro)
+head(viajesbicis_microcentro)
 ```
 
 Notamos que sólo existen 99 recorridos inicados y finalizados dentro del microcentro.
   
-A modo de comparación, el análisis previo y para entender el cambio en los patrones de uso:
+Indaguemos con mayor profundidad las característas que presentan los viajes dentro de esta área.
   
 **¿Cúantos minutos duran los viajes en bicicleta iniciados y finalizados dentro del microcentro en promedio?**
 
 ```{r}
-bicis_microcentro <- bicis_microcentro %>%
+viajesbicis_microcentro <- viajesbicis_microcentro %>%
   mutate(duracion_minutos = round(as.numeric(as.duration(duracion_recorrido), "minutes"),2)) 
 ```
 
 ```{r}
-paste(round(mean(bicis_microcentro$duracion_minutos),2), " minutos es el promedio de duracion de viajes. Sin embargo, la mediana está en ", round(median(bicis_microcentro$duracion_minutos),2), " minutos, por lo que, al igual que en el análisis correspondiente al TP3, reconocemos un sesgo positivo (cola hacia la derecha)")
+paste(round(mean(viajesbicis_microcentro$duracion_minutos),2), "minutos es el promedio de duracion de los viajes realizados en el área central de la CABA. Sin embargo, la mediana está en", round(median(viajesbicis_microcentro$duracion_minutos),2), "minutos, por lo que, al igual que en el análisis correspondiente al TP3, reconocemos un sesgo positivo frente a valores extremos.")
 ```
 
 Al limitar el área de origen y destino notamos una considerable reducción del tiempo promedio de los viajes.  
 
 ```{r}
-paste("La reducción en el tiempo promedio es de un ",  round(((mean(bicis_2020$duracion_minutos)/mean(bicis_microcentro$duracion_minutos)-1)*100),2), "%")
+paste("La reducción en el tiempo promedio es de un ",  round(((mean(bicis_2020$duracion_minutos)/mean(viajesbicis_microcentro$duracion_minutos)-1)*100),2), "%")
 ```
 
-**¿Hay viajes circulares?**
+**¿Cómo es la distribución de viajes entre estaciones de Ecobicis?**
+
+1º. Creamos un dataset que agrupe los viajes por estación de origen y estación de destino.
 
 ```{r message=FALSE}
-viajes <- bicis_microcentro %>% 
-    group_by(id_estacion_origen, nombre_estacion_origen, id_estacion_destino, nombre_estacion_destino, long_estacion_origen, lat_estacion_origen, long_estacion_destino, lat_estacion_destino) %>% 
-    summarise(cant_viajes = n())
+viajes <- viajesbicis_microcentro %>%
+  group_by(id_estacion_origen, nombre_estacion_origen, id_estacion_destino, nombre_estacion_destino, long_estacion_origen, lat_estacion_origen, long_estacion_destino, lat_estacion_destino) %>%
+  summarise(cant_viajes = n())
 ```
+
+2º. Graficamos la distribución de viajes entre estaciones.
   
 ```{r}
 ggplot() + 
-    geom_tile(data = viajes, aes(x = as.factor(id_estacion_origen), y = as.factor(id_estacion_destino), fill = cant_viajes)) +
-    labs(title="Matriz Origen-Destino",
-       subtitle = "Estaciones de bicis del microcentro porteño",
+  geom_tile(data = viajes, aes(x = as.factor(id_estacion_origen), y = as.factor(id_estacion_destino), fill = cant_viajes)) +
+  labs(title="Matriz Origen-Destino",
+       subtitle = "Estaciones de Ecobicis del microcentro porteño",
        y="Estación de origen",
        x="Estación de destino",
+       fill="Viajes",
        caption = "Fuente: BA Data")+
-  scale_fill_viridis_c()+
+  scale_fill_viridis_c(breaks=c(0,3,6,9,12),
+                       limits=c(0,12))+
   theme_minimal()
-  
 ```
   
-A simple vista se evidencia que sí hay presencia de viajes circulares y casualmente son los que más mayor frecuencia acumulan, principalmente en las siguientes estaciones:
-
-| Origen-Destino | Nombre de la estación |
-| ----------- | ----------- |
-| 8 | Congreso |
-| 144 | Pueyrredón |
-| 183 | Virrey Cevallos |
-
-Lo miramos más de cerca: 
+A simple vista, observamos una distribución pareja de viajes entre estaciones del microcentro. No obstante, podemos evidenciar que existe una considerable presencia de viajes circulares, principalmente, para las estaciones 8 (Congreso), 144 (Pueyrredon) y 183 (Virrey Cevallos).
 
 ```{r}
-viajes_ciculares<- viajes[which(viajes$id_estacion_origen == viajes$id_estacion_destino), ]
+viajes %>% 
+  arrange(desc(cant_viajes)) %>% 
+  head(3)
+```
 
-head(arrange(viajes_ciculares, desc(cant_viajes)))
+Veamoslo de otra manera:
+
+```{r}
+viajes_top10 <- viajes %>% 
+  mutate(viajes_circulares = if_else(id_estacion_origen==id_estacion_destino, "si", "no"),
+         ruta = paste("Desde", nombre_estacion_origen, "\n Hasta", nombre_estacion_destino)) %>%
+  arrange(desc(cant_viajes)) %>% 
+  head(10)
 ```
 
 ```{r}
-ggplot(viajes_ciculares, aes(y=reorder(nombre_estacion_origen, -cant_viajes), x=cant_viajes)) +
-  geom_bar(stat="identity", fill="orange", alpha=.5, color="black")+
-  labs(title = "Viajes circulares en bici",
-       subtitle = "Estaciones de bicis del microcentro porteño",
+ggplot(viajes_top10, aes(y=reorder(ruta, -cant_viajes), x=cant_viajes, fill=viajes_top10$viajes_circulares)) +
+  geom_bar(stat="identity", alpha=.5, color="black")+
+  scale_x_continuous(breaks = seq(0,12,3),
+                     limits = c(0,12))+
+  labs(title = "Top 10 viajes más realizados en bici",
+       subtitle = "Entre estaciones de Ecobicis del Microcentro",
        x = "Cantidad de viajes",
-       y = "Estación",
-       caption = "BA Data")+
+       y = "Recorrido",
+       fill = "Viaje \n circular",
+       caption = "Fuente: BA Data")+
   theme_minimal()
 ```
 
-```{r}
-viajes_ciculares<- st_as_sf(viajes_ciculares, coords = c("long_estacion_origen", "lat_estacion_origen"), crs = 4326)
+Como podemos ver, 6 de los 10 viajes más realizados en el Microcentro son circulares. De dichos 6, 4 integran el top 5, entre las posiciones 1 y 4. Por este motivo, podemos concluir que la mayoría de los viajes que se realizan al interior del Microcento son circulares.
 
+Una cuestión a tener en cuenta es que los viajes desde la estación Paraná a la estación Congreso (y viceversa) parecen realizarce con una frecuencia considerable. Tal es así que, si sumamos ambas, el trayecto pasaría a ser considerado como uno de los más frecuentes por los usuarios al interior del Microcentro.
+
+Ahora, veamos la distribución de los viajes circulares en el territorio.
+
+1º. Creemos un dataset que contenga solo viajes circulares.
+
+```{r}
+circulares <- viajes[which(viajes$id_estacion_origen == viajes$id_estacion_destino), ]
+```
+
+2º. Transformemos nuestro dataset en uno espacial.
+
+```{r}
+circulares<- st_as_sf(circulares, coords = c("long_estacion_origen", "lat_estacion_origen"), crs = 4326)
+```
+
+3º. Grafiquemos.
+
+```{r}
 ggplot()+
   geom_sf(data = microcentro, fill="grey96")+
-  geom_sf(data=viajes_ciculares, aes(size=cant_viajes),color="orange", alpha=0.8)+
+  geom_sf(data = espacioverde, fill="springgreen2")+
+  geom_sf(data= circulares, aes(size=cant_viajes),color="orange", alpha=0.8)+
   labs(title = "¿Donde se ubican los viajes circulares más frecuentes?",
        color="Cantidad de viajes",
        subtitle = "Estaciones de bicis del microcentro porteño",
+       size="Viajes",
        caption = "Fuente: BA Data")+
   scale_size_continuous(range = c(4, 10), breaks= c(2,4,6,8, 10))+
   theme_void()
-
 ```
 
 b. *Calcular los 10 recorridos más realizados, describir los resultados obtenidos y hacer un mapa con los ruteos.*
 
-```{r}
-top_10 <- viajes %>%
-          arrange(desc(cant_viajes)) %>%
-          head(10)
+Como vimos anteriormente, los 10 recorridos más realizados son:
+
+```{r message=FALSE}
+viajes_top10 %>% 
+  select(ruta, cant_viajes, viajes_circulares)
 ```
 
-Las 3 estaciones con más viajes coinciden con las estaciones con más viajes circulares
-Procedemos a agregarle la información al dataset que generamos: 
+A continuación, procederemos a mapaear los ruteos.
 
-```{r}
+```{r include=FALSE}
 library(osrm)
 ```
+
+1º. Creamos una función que calcule las rutas entre estaciones de Ecobicis.
 
 ```{r message=FALSE}
 ruteo_bikes <- function(nombre_estacion_origen, long_estacion_origen, lat_estacion_origen,
@@ -1150,37 +1168,45 @@ ruteo_bikes <- function(nombre_estacion_origen, long_estacion_origen, lat_estaci
                     overview = "full",
                     osrm.profile = "bike")
   
-  cbind(ORIGEN = nombre_estacion_origen, DESTINO = nombre_estacion_destino, ruta)
-}
+  cbind(ORIGEN = nombre_estacion_origen, DESTINO = nombre_estacion_destino, ruta)}
 ```
 
+2º. Generamos una lista que contenga los casos a analizar.
+
 ```{r}
-ruteo_top_10 <- list(top_10$nombre_estacion_origen, top_10$long_estacion_origen, top_10$lat_estacion_origen,
-                   top_10$nombre_estacion_destino, top_10$long_estacion_destino, top_10$lat_estacion_destino)
+ruteo_top_10 <- list(viajes_top10$nombre_estacion_origen, viajes_top10$long_estacion_origen, viajes_top10$lat_estacion_origen, viajes_top10$nombre_estacion_destino, viajes_top10$long_estacion_destino, viajes_top10$lat_estacion_destino)
 ```
+
+3º. Aplicamos nuestra función.
 
 ```{r}
 ruteo_top_10 <- pmap(ruteo_top_10, ruteo_bikes) %>% 
   reduce(rbind)
 ```
 
-```{r}
-summary(ruteo_top_10) 
-```
+4º. Graficamos.
 
 ```{r}
-ggplot()+
-  geom_sf(data = microcentro, fill="grey96")+
+ggmap(mapamicrocentro)+
   geom_sf(data=ruteo_top_10, aes(color=duration), size=2, inherit.aes = FALSE)+
-  labs(title="Top 20 Recorridos más Realizados en Bicicleta",
-       subtitle="Blue Bike - Boston",
-       caption="Fuente: https://www.bluebikes.com/system-data")+
-  scale_color_viridis_c(direction=-1)+
+  geom_sf(data = ecobicis, aes(fill="Ecobicis"), color="orange", size=4, inherit.aes = FALSE)+
+  labs(title="Recorridos más realizados en Bicicleta en el Microcento",
+       subtitle="Viajes lineales",
+       fill="",
+       color="Duración \n (Minutos)",
+       caption="Fuente: BA Data")+
+  scale_color_viridis_c(breaks=seq(0,8,2),
+                        limits=c(0,8))+
   theme_void()
-
-
-#ESTE GRAFICO NO ESTA SALIENDO BIEN +
-#ESTARIA BUENO USAR GGMAP Y LEAFLET
 ```
 
+```{r}
+paleta <- c(low="gold", high= "red")
 
+leaflet(ruteo_top_10) %>%
+  addTiles() %>%
+  addPolylines(color = ~colorNumeric(paleta, ruteo_top_10$distance)(distance),
+               weight = 6)
+
+#A terminar
+```
