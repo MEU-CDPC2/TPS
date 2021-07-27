@@ -35,7 +35,7 @@ editor_options:
 
 
 ```{r include=FALSE}
-sf::sf_use_s2(FALSE) #Qué es esto, Luis?
+sf::sf_use_s2(FALSE)
 library(tidyverse)
 library(sf)
 library(ggmap)
@@ -1021,7 +1021,7 @@ La decisión de limitarnos espacialmente no sólo tiene que ver, entender el com
 Ahora sí, procedemos a cargar el nuevo dataset filtrado: 
 
 ```{r message=FALSE, warning=FALSE}
-viajesbicis_microcentro <- read.csv("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/bicis_microcentro_origen_destino.csv", stringsAsFactors = TRUE, encoding = "UTF-8") #Solo 99 viajes hubo en todo 2020 en el microcentro???
+viajesbicis_microcentro <- read.csv("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datasets/bicis_microcentro_origen_destino.csv", stringsAsFactors = TRUE, encoding = "UTF-8")
 ```
 
 ```{r}
@@ -1186,17 +1186,20 @@ ruteo_top_10 <- pmap(ruteo_top_10, ruteo_bikes) %>%
 
 4º. Graficamos.
 
+### YO VOLVERíA A LA VERSIóN ORIGINAL DE ESTE GrÁFICO Y SLO GRAFICARÍA LOS VIAJES LINEALES. PONDRíA ALGO ASí COMO "LOS VIAJES LINEALES MÁS LARGOS DEL MICROCENTRO"
+
 ```{r message=FALSE, warning=FALSE}
 ggmap(mapamicrocentro)+
   geom_sf(data=ruteo_top_10, aes(color=duration), size=2, inherit.aes = FALSE)+
-  geom_sf(data = ecobicis, aes(fill="Ecobicis"), color="orange", size=4, inherit.aes = FALSE)+
+  geom_sf(data= circulares, aes(size=cant_viajes),color="orange", alpha=0.8, inherit.aes = FALSE)+
   labs(title="Recorridos más realizados en Bicicleta en el Microcento",
-       subtitle="Viajes lineales",
        fill="",
+       size=" Viajes \n circulares\n por estación\n de Ecobici",
        color="Duración \n (Minutos)",
-       caption="Fuente: BA Data")+
+       caption="Fuente: BA Data.\n Aclaración: Ante la imposibilidad de graficar el recorrido de los viajes circulares,\n la variable duración solo aplica a los recorridos lineales.")+
   scale_color_viridis_c(breaks=seq(0,8,2),
                         limits=c(0,8))+
+  scale_size_continuous(range = c(4, 10), breaks= c(2,4,6,8, 10))+
   theme_void()
 ```
 
@@ -1206,7 +1209,9 @@ paleta <- c(low="gold", high= "red")
 leaflet(ruteo_top_10) %>%
   addTiles() %>%
   addPolylines(color = ~colorNumeric(paleta, ruteo_top_10$distance)(distance),
-               weight = 6)
-
-#A terminar
+               weight = 6,
+               label = paste("Ruta: Desde", ruteo_top_10$ORIGEN,
+                             "hasta", ruteo_top_10$DESTINO,"|",
+                             "Distancia:", round((ruteo_top_10$distance),2),"KM", "|",
+                             "Duración:", round((ruteo_top_10$duration),0),"min."))
 ```
