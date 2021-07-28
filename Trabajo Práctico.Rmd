@@ -1186,11 +1186,13 @@ ruteo_top_10 <- pmap(ruteo_top_10, ruteo_bikes) %>%
 
 4º. Graficamos.
 
-### YO VOLVERíA A LA VERSIóN ORIGINAL DE ESTE GrÁFICO Y SLO GRAFICARÍA LOS VIAJES LINEALES. PONDRíA ALGO ASí COMO "LOS VIAJES LINEALES MÁS LARGOS DEL MICROCENTRO"
 
 ```{r message=FALSE, warning=FALSE}
+ruteo_top_10 <- ruteo_top_10 %>% 
+  st_jitter(amount=.00035) #separamos levemente los recorridos para evitar superposición y visualizarlos a todos
+
 ggmap(mapamicrocentro)+
-  geom_sf(data=ruteo_top_10, aes(color=duration), size=2, inherit.aes = FALSE)+
+  geom_sf(data=ruteo_top_10_2, aes(color=duration), size=1.5, inherit.aes = FALSE)+
   geom_sf(data= circulares, aes(size=cant_viajes),color="orange", alpha=0.8, inherit.aes = FALSE)+
   labs(title="Recorridos más realizados en Bicicleta en el Microcento",
        fill="",
@@ -1202,6 +1204,13 @@ ggmap(mapamicrocentro)+
   scale_size_continuous(range = c(4, 10), breaks= c(2,4,6,8, 10))+
   theme_void()
 ```
+  
+Evidenciamos que, además de los viajes ciruculares, imposibles de graficar por falta de ruteo, los recorrridos más frecuentes se cocentran por las ciclovías de las calles Tucumán y Motevideo.     
+Además, notamos que las estaciones con mayor frecuencia de viajes circulares se ubican geográficamente en la misma traza. 
+El único ruteo que se superpone en nuestro top 10 de viajes más frecuentes, es el correspondiente al tramo de las estaciones Congreso-Paraná, que registra viajes en ambos sentidos.    
+  
+  
+  
 
 ```{r message=FALSE, warning=FALSE}
 paleta <- c(low="gold", high= "red")
@@ -1215,3 +1224,7 @@ leaflet(ruteo_top_10) %>%
                              "Distancia:", round((ruteo_top_10$distance),2),"KM", "|",
                              "Duración:", round((ruteo_top_10$duration),0),"min."))
 ```
+
+
+
+
