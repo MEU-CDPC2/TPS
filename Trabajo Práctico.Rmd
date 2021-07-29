@@ -229,7 +229,7 @@ set_key("pcWH0YNYi1G1eqMvAM7fjHWMvqNOaKL6yprw1aMNCeU")
 
 Ahora, analizaremos la ubicación de los estacionamientos en referencia a los espacios verdes y su cobertura. Particularmente, nos centraremos en identificar el rango de manzanas que se puden cubrir a pie en 5 minutos o menos desde un espacio verde.
 
-```{r message=FALSE}
+```{r message=FALSE, warning=FALSE}
 puntosEspaciosVerdes <- map(1:nrow(espacioverde),function(x){st_sample(espacioverde[x,],size=4)})
 puntosEspaciosVerdes <- do.call("c",puntosEspaciosVerdes)
 puntosEspaciosVerdesSF <- st_as_sf(puntosEspaciosVerdes)
@@ -271,7 +271,7 @@ Ahora comparemos los estacionamientos, pero utilizando las estaciones de Ecobici
 bbox_microcentro <- as.numeric(st_bbox(microcentro))
 ```
 
-```{r message=FALSE}
+```{r message=FALSE, warning=FALSE}
 mapamicrocentro <- get_stamenmap(bbox = bbox_microcentro,
                           maptype = "toner-lite",
                           zoom=15)
@@ -285,9 +285,9 @@ ecobicis <- st_read("https://raw.githubusercontent.com/MEU-CDPC2/TPS/main/Datase
 ecobicis <- st_intersection(ecobicis, microcentro)
 ```
 
-```{r message=FALSE}
+```{r message=FALSE, warning=FALSE}
 isocronosbicis <- map(1:nrow(ecobicis),function(x) {cat("Procesando: ",x,"\r")
-  isoline(bicis[x,], transport_mode = "pedestrian",range_type = "time",range = 60*5)})
+  isoline(ecobicis[x,], transport_mode = "pedestrian",range_type = "time",range = 60*5)})
 isocronosbicisjuntas <- do.call(rbind,isocronosbicis)
 isocronosbicisjuntasunion <-  st_union(isocronosbicisjuntas)
 isocronosbicisjuntasunion <- st_as_sf(isocronosbicisjuntasunion) %>% 
@@ -848,7 +848,7 @@ En este marco, la provisión de nuevos espacios verdes en el microcentro porteñ
 ### <a id="tp_4"></a>**Trabajo Práctico N°4**
 
 
-```{r include=FALSE, eval=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 library(rtweet)
 ```
 
@@ -861,7 +861,7 @@ Previo a realizar cualquier intervención sobre el Microcentro, debemos indagar 
 
 Nuestro primer paso será descargar los tweets originales emitidos en la CABA que contengan las palabras "espacio verde" en cualquier parte de su estructura. Para delimitar el área, seleccionamos las coordenadas del parque Centenario y establecemos un radio de 6,5 millas, la distancia que existe en promedio al borde del distrito.
 
-```{r eval=FALSE}
+```{r message=FALSE, warning=FALSE}
 tweets_verdes <- search_tweets(q="espacios+verdes", 
                                n=100000, 
                                geocode = "-34.606022,-58.433788,6.5mi", 
@@ -872,7 +872,7 @@ tweets_verdes <- search_tweets(q="espacios+verdes",
 
 Repetimos el proceso para la palabra "espacio público".
 
-```{r eval=FALSE}
+```{r message=FALSE, warning=FALSE}
 tweets_publicos <- search_tweets(q = "espacio+público",
                                  n = 100000,
                                  geocode = "-34.606022,-58.433788,6.5mi",
@@ -884,14 +884,14 @@ Si bien hicimos la consulta por 100000 tweets de la última semana, notamos que 
 
 Unimos ambos datasets.
 
-```{r eval=FALSE}
+```{r message=FALSE, warning=FALSE}
 tweets <- union_all(tweets_verdes, tweets_publicos)
 ```
 
   
 La cantidad de tweets obtenida para cada una de las búsquedas fue:  
 
-```{r eval=FALSE}
+```{r message=FALSE, warning=FALSE}
 paste("Espacios verdes: ", length(tweets_verdes))
 paste("Espacio público: ", length(tweets_publicos))
 ```
@@ -902,7 +902,7 @@ a. *¿Cómo se distribuye la popularidad de los usuarios? ¿Quiénes son los 5 q
 
 Ahora veremos la popularidad de los twiteros en cuestión.
 
-```{r eval=FALSE, message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE}
 ggplot(tweets) +
   geom_histogram(aes(x = followers_count), fill="orange", alpha=.5, color="black")+
   scale_y_continuous(limit = c(0, 90), breaks = seq(0, 90, 10))+
@@ -920,7 +920,7 @@ Veamos con mayor profundidad.
 
 Obtenemos un top 10 de los usuarios más populares.
 
-```{r eval=FALSE}
+```{r message=FALSE, warning=FALSE}
 tweets %>% 
   select(screen_name, followers_count) %>% 
   distinct() %>% 
@@ -932,7 +932,7 @@ De nuestra muestra, vemos que el usuario más popular es el GCBA, seguido, en su
 
 En esta línea, veamos el tweet más popular y su contenido.
 
-```{r eval=FALSE}
+```{r message=FALSE, warning=FALSE}
 tweets %>%
   select(screen_name, text, retweet_count) %>%
   distinct() %>% 
@@ -948,7 +948,7 @@ b. *¿En qué momento del día se realiza la mayor cantidad de tweets? Graficar.
 
 Ahora veremos a qué hora se twittea con mayor intensidad sobre los temas de interés. 
 
-```{r eval=FALSE, message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE}
 tweets %>%
   count(hora = hour(with_tz(created_at, "America/Argentina/Buenos_Aires"))) %>% 
   ggplot() +
@@ -972,20 +972,20 @@ Ahora bien, veamos desde donde twittean los usuarios que hablan sobre nuestra te
 
 1º. Extraemos las coordenadas de nuestros tweets
 
-```{r eval=FALSE}
+```{r message=FALSE, warning=FALSE}
 tweets_geo <- lat_lng(tweets)
 ```
 
 Filtramos para solo quedarnos con los tweets que tienen coordenadas precisas.
 
-```{r eval=FALSE}
+```{r message=FALSE, warning=FALSE}
 tweets_geo <- tweets_geo %>% 
     filter(!is.na(lat), !is.na(lng))
 ```
 
 Graficamos
 
-```{r eval=FALSE}
+```{r message=FALSE, warning=FALSE}
 leaflet(tweets_geo) %>% 
     addTiles() %>% 
     addMarkers(popup = ~paste("user:", screen_name,
@@ -1043,11 +1043,8 @@ viajesbicis_microcentro <- viajesbicis_microcentro %>%
 paste(round(mean(viajesbicis_microcentro$duracion_minutos),2), "minutos es el promedio de duracion de los viajes realizados en el área central de la CABA. Sin embargo, la mediana está en", round(median(viajesbicis_microcentro$duracion_minutos),2), "minutos, por lo que, al igual que en el análisis correspondiente al TP3, reconocemos un sesgo positivo frente a valores extremos.")
 ```
 
-Al limitar el área de origen y destino notamos una considerable reducción del tiempo promedio de los viajes.  
-
-```{r message=FALSE, warning=FALSE}
-paste("La reducción en el tiempo promedio es de un ",  round(((mean(bicis_2020$duracion_minutos)/mean(viajesbicis_microcentro$duracion_minutos)-1)*100),2), "%")
-```
+Al limitar el área de origen y destino notamos una reducción del tiempo promedio de los viajes de 43.76%.
+  
 
 **¿Cómo es la distribución de viajes entre estaciones de Ecobicis?**
 
@@ -1189,10 +1186,10 @@ ruteo_top_10 <- pmap(ruteo_top_10, ruteo_bikes) %>%
 
 ```{r message=FALSE, warning=FALSE}
 ruteo_top_10 <- ruteo_top_10 %>% 
-  st_jitter(amount=.00035) #separamos levemente los recorridos para evitar superposición y visualizarlos a todos
+  st_jitter(amount=.0005) #separamos levemente los recorridos para evitar superposición y visualizarlos a todos
 
 ggmap(mapamicrocentro)+
-  geom_sf(data=ruteo_top_10_2, aes(color=duration), size=1.5, inherit.aes = FALSE)+
+  geom_sf(data=ruteo_top_10, aes(color=duration), size=1.5, inherit.aes = FALSE)+
   geom_sf(data= circulares, aes(size=cant_viajes),color="orange", alpha=0.8, inherit.aes = FALSE)+
   labs(title="Recorridos más realizados en Bicicleta en el Microcento",
        fill="",
